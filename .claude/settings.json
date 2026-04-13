@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp:*)",
+      "Bash(npx claude:*)",
+      "Read(//Users/aishwaryabadiger/.claude/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//usr/**)",
+      "Read(//Users/aishwaryabadiger/.antigravity/antigravity/bin/**)",
+      "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && head -3 {}')",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Read(//Users/aishwaryabadiger/**)"
+    ],
+    "additionalDirectories": [
+      "/Users/aishwaryabadiger/.claude",
+      "/Users/aishwaryabadiger/ohh-my-happiness/src/app/account/orders",
+      "/Users/aishwaryabadiger/ohh-my-happiness/src/app/admin/orders",
+      "/Users/aishwaryabadiger/ohh-my-happiness/src/app/admin/customers/[id]"
+    ]
+  }
+}

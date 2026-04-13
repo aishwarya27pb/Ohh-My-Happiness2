@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+:root {
+  --golden-apricot: #FFB449;
+  --warm-honey: #F7C96A;
+  --soft-peach: #FFE4C2;
+  --cloud-cream: #FFF9EE;
+  --amber-spark: #FF8A00;
+  --foreground: #1A1A1A;
+  --muted: #6B6B6B;
+}
+
+@theme inline {
+  --color-golden: #FFB449;
+  --color-honey: #F7C96A;
+  --color-peach: #FFE4C2;
+  --color-cream: #FFF9EE;
+  --color-amber: #FF8A00;
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-playfair: var(--font-playfair);
+  --font-dm-sans: var(--font-dm-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #FFF9EE;
+  color: #1A1A1A;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FFF9EE;
+}
+::-webkit-scrollbar-thumb {
+  background: #FFB449;
+  border-radius: 3px;
+}
+
+/* Utility classes */
+.gradient-sunshine {
+  background: linear-gradient(135deg, #FFB449 0%, #F7C96A 50%, #FFE4C2 100%);
+}
+
+.gradient-warm {
+  background: linear-gradient(180deg, #FFF9EE 0%, #FFE4C2 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FF8A00, #FFB449);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(255, 138, 0, 0.15);
+}
+
+.btn-primary {
+  background: #FFB449;
+  color: #1A1A1A;
+  font-weight: 600;
+  border-radius: 50px;
+  padding: 12px 28px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover {
+  background: #FF8A00;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 138, 0, 0.35);
+}
+
+.btn-outline {
+  background: transparent;
+  color: #FFB449;
+  font-weight: 600;
+  border-radius: 50px;
+  padding: 12px 28px;
+  border: 2px solid #FFB449;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-outline:hover {
+  background: #FFB449;
+  color: #1A1A1A;
+}
+
+/* Section spacing */
+.section-padding {
+  padding: 80px 0;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 48px 0;
+  }
+}

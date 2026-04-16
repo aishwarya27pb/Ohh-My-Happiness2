@@ -1,4 +1,8 @@
+"use client";
+
 import SectionHeader from "@/components/ui/SectionHeader";
+import { Reveal, StaggerReveal, staggerItem } from "@/components/ui/Reveal";
+import { motion } from "framer-motion";
 
 const steps = [
   { step: "01", icon: "🔍", title: "Browse & Choose", desc: "Explore our curated gift collections across categories, occasions, and budgets." },
@@ -11,16 +15,18 @@ export default function HowItWorks() {
   return (
     <section className="section-padding bg-gradient-to-b from-[#FFF9EE] to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          eyebrow="How It Works"
-          title="Gifting Made "
-          highlight="Effortless"
-          subtitle="Four simple steps from browsing to delivery — we handle the rest."
-        />
+        <Reveal direction="up">
+          <SectionHeader
+            eyebrow="How It Works"
+            title="Gifting Made "
+            highlight="Effortless"
+            subtitle="Four simple steps from browsing to delivery — we handle the rest."
+          />
+        </Reveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StaggerReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.12} delay={0.15}>
           {steps.map((s, i) => (
-            <div key={s.step} className="relative">
+            <motion.div key={s.step} variants={staggerItem} className="relative">
               {/* Connector line */}
               {i < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-[#FFB449] to-[#FFE4C2] z-0 -translate-x-1/2" />
@@ -38,9 +44,9 @@ export default function HowItWorks() {
                 <h3 className="font-bold text-[#1A1A1A] mb-2">{s.title}</h3>
                 <p className="text-sm text-[#6B6B6B] leading-relaxed">{s.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </StaggerReveal>
       </div>
     </section>
   );

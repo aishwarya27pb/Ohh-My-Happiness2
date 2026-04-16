@@ -13,6 +13,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export default function Header() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -21,6 +22,10 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { totalItems, toggleCart, state } = useCart();
   const { count: wishlistCount } = useWishlist();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -141,16 +146,16 @@ export default function Header() {
 
               {/* Wishlist */}
               <div className="relative group/tip">
-                <Link href="/store?wishlist=true" className="relative block p-2 rounded-full hover:bg-[#FFE4C2] transition-colors">
+                <Link href="/wishlist" className="relative block p-2 rounded-full hover:bg-[#FFE4C2] transition-colors">
                   <Heart size={19} className="text-[#1A1A1A]" />
-                  {wishlistCount > 0 && (
+                  {mounted && wishlistCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-[#FF8A00] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                       {wishlistCount}
                     </span>
                   )}
                 </Link>
                 <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1A1A1A] text-white text-[11px] rounded-lg whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50">
-                  Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+                  Wishlist{mounted && wishlistCount > 0 ? ` (${wishlistCount})` : ""}
                 </span>
               </div>
 
@@ -162,14 +167,14 @@ export default function Header() {
                   aria-label="Cart"
                 >
                   <ShoppingCart size={19} className="text-[#1A1A1A]" />
-                  {totalItems > 0 && (
+                  {mounted && totalItems > 0 && (
                     <span className="absolute -top-1 -right-1 bg-[#FFB449] text-[#1A1A1A] text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                       {totalItems}
                     </span>
                   )}
                 </button>
                 <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1A1A1A] text-white text-[11px] rounded-lg whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50">
-                  Cart{totalItems > 0 ? ` · ${totalItems} item${totalItems !== 1 ? "s" : ""}` : ""}
+                  Cart{mounted && totalItems > 0 ? ` · ${totalItems} item${totalItems !== 1 ? "s" : ""}` : ""}
                 </span>
               </div>
 

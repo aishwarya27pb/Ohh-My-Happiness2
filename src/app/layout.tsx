@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 
@@ -68,9 +66,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#FFF9EE]">
         <CartProvider>
           <WishlistProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            {children}
           </WishlistProvider>
         </CartProvider>
       </body>

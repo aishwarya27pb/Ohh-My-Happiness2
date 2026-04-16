@@ -4,25 +4,10 @@ import { updateSession } from "@/lib/supabase/middleware";
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user, supabase } = await updateSession(request);
   const path = request.nextUrl.pathname;
+  console.log(`[Middleware] Path: ${path}, User: ${user?.email ?? "Guest"}`);
 
   // ── Admin route protection ──────────────────────────────────────────────
-  if (path.startsWith("/admin")) {
-    if (path === "/admin/login") {
-      // Already logged in as admin? Skip the login page.
-      if (user) {
-        const { data: profile } = (await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single()) as { data: { role: string } | null; error: unknown };
-        if (profile?.role === "admin") {
-          return NextResponse.redirect(new URL("/admin", request.url));
-        }
-      }
-      return supabaseResponse;
-    }
-
-    // All other /admin/* routes require an authenticated admin
+  if (path.startsWith("/admin") && path !== "/admin/login") {
     if (!user) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
@@ -56,5 +41,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*"],
+  matcher: ["/admin/:path*", "/account/:path*", "/admin", "/account"],
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -12,9 +13,15 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, className = "" }: ProductCardProps) {
+  const [mounted, setMounted] = useState(false);
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
-  const wishlisted = isWishlisted(product.id);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const wishlisted = mounted ? isWishlisted(product.id) : false;
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)

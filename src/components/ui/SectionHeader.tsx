@@ -20,7 +20,7 @@ export default function SectionHeader({
   return (
     <div className={`${centered ? "text-center" : ""} mb-10 ${className}`}>
       {eyebrow && (
-        <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#FF8A00] mb-3 bg-[#FFE4C2] px-4 py-1.5 rounded-full">
+        <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#FF8A00] mb-3 bg-[#FF8A00]/10 px-4 py-1.5 rounded-full">
           {eyebrow}
         </span>
       )}
@@ -28,7 +28,7 @@ export default function SectionHeader({
         {highlight ? (
           <>
             {titleParts[0]}
-            <span className="text-gradient">{highlight}</span>
+            <span className="text-[#FF8A00]">{highlight}</span>
             {titleParts[1]}
           </>
         ) : (

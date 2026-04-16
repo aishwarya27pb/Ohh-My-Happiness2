@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import type { Product } from "@/types";
+import { createClient } from "@/lib/supabase/client";
 
 interface WishlistState {
   items: Product[];
@@ -30,6 +31,7 @@ interface WishlistContextValue {
   items: Product[];
   addItem: (product: Product) => void;
   removeItem: (id: string) => void;
+  clearWishlist: () => void;
   toggle: (product: Product) => void;
   isWishlisted: (id: string) => boolean;
   count: number;
@@ -52,9 +54,25 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     return { items: [] };
   });
 
+  // Persist to local storage
   useEffect(() => {
     localStorage.setItem("omh-wishlist", JSON.stringify(state.items));
   }, [state.items]);
+
+  // Auth listener to clear wishlist on sign out
+  useEffect(() => {
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        dispatch({ type: "CLEAR" });
+        localStorage.removeItem("omh-wishlist");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <WishlistContext.Provider
@@ -62,6 +80,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         items: state.items,
         addItem: (p) => dispatch({ type: "ADD", payload: p }),
         removeItem: (id) => dispatch({ type: "REMOVE", payload: id }),
+        clearWishlist: () => dispatch({ type: "CLEAR" }),
         toggle: (p) => {
           if (state.items.find((i: Product) => i.id === p.id)) {
             dispatch({ type: "REMOVE", payload: p.id });

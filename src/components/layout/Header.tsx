@@ -10,6 +10,7 @@ import { ShoppingCart, Heart, Menu, X, Search, Phone, UserCircle, Package, LogOu
 import MiniCart from "@/components/cart/MiniCart";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import toast from "react-hot-toast";
 
 export default function Header() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function Header() {
     await supabase.auth.signOut(); // fires SIGNED_OUT → onAuthStateChange clears user
     setUserMenuOpen(false);
     setMenuOpen(false);
+    toast.success("Signed out successfully");
     router.push("/");
     router.refresh();
   }
@@ -77,11 +79,7 @@ export default function Header() {
 
   return (
     <>
-      {/* Top bar */}
-      <div className="bg-[#FFB449] text-[#1A1A1A] text-center text-xs py-2 px-4 font-medium tracking-wide">
-        <span>🎁 Free delivery on orders above ₹999 | Call us: </span>
-        <a href="tel:+919999999999" className="font-bold underline">+91 99999 99999</a>
-      </div>
+
 
       {/* Main Header */}
       <header

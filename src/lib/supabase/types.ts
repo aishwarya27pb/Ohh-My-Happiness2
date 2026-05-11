@@ -24,6 +24,7 @@ export interface Database {
           role: "customer" | "admin";
           first_name: string | null;
           last_name: string | null;
+          email: string | null;
           phone: string | null;
           created_at: string;
           updated_at: string;
@@ -33,6 +34,7 @@ export interface Database {
           role?: "customer" | "admin";
           first_name?: string | null;
           last_name?: string | null;
+          email?: string | null;
           phone?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -42,6 +44,7 @@ export interface Database {
           role?: "customer" | "admin";
           first_name?: string | null;
           last_name?: string | null;
+          email?: string | null;
           phone?: string | null;
           updated_at?: string;
         };

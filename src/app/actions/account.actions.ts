@@ -13,7 +13,7 @@ import { revalidatePath } from "next/cache";
 export async function updateProfileAction(updates: {
   firstName?: string;
   lastName?: string;
-  phone?: string;
+  phone: string;
 }): Promise<{ error?: string }> {
   try {
     const supabase = await createClient();

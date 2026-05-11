@@ -24,7 +24,7 @@ export async function getCustomerAction(id: string): Promise<{
 
 export async function updateCustomerNotesAction(
   id: string,
-  notes: { phone?: string; firstName?: string; lastName?: string }
+  notes: { phone: string; firstName?: string; lastName?: string }
 ): Promise<{ error?: string }> {
   try {
     await updateProfile(id, {

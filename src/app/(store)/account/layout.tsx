@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Package, User, LogOut, ChevronRight } from "lucide-react";
-import { signOut } from "@/app/actions/auth.actions";
+import { Package, User, ChevronRight } from "lucide-react";
+import SignOutButton from "@/components/auth/SignOutButton";
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -56,15 +56,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
                 </Link>
               ))}
               <div className="border-t border-[#FFE4C2] mt-2 pt-2">
-                <form action={signOut.bind(null, false)}>
-                  <button
-                    type="submit"
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut size={16} />
-                    Sign Out
-                  </button>
-                </form>
+                <SignOutButton />
               </div>
             </nav>
           </div>

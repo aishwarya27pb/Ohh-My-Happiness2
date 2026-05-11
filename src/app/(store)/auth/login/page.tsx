@@ -4,7 +4,6 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,7 +16,7 @@ const TESTIMONIALS = [
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") ?? "/account";
+  const nextPath = searchParams.get("next") ?? "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,8 +39,6 @@ function LoginForm() {
     setIsLoading(true);
     setError(null);
 
-    // Sign in via browser client so onAuthStateChange fires SIGNED_IN immediately,
-    // updating the header avatar without needing a full page reload.
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -51,7 +48,6 @@ function LoginForm() {
       return;
     }
 
-    // refresh() re-syncs server components (account page data), then navigate
     router.refresh();
     router.push(nextPath);
   }
@@ -59,24 +55,14 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex">
       {/* ── Left decorative panel ───────────────────────────────────────── */}
-      <motion.div
-        initial={{ x: -60, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      <div
         className="hidden lg:flex lg:w-[45%] relative overflow-hidden flex-col justify-between p-12"
         style={{
           background:
             "linear-gradient(145deg, #FF8A00 0%, #FFB449 40%, #F7C96A 75%, #FFE4C2 100%)",
         }}
       >
-        {/* Grain overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.08] pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-            backgroundSize: "180px",
-          }}
-        />
+
         {/* Large decorative circle */}
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-16 w-80 h-80 rounded-full bg-amber-700/20 blur-3xl" />
@@ -108,13 +94,9 @@ function LoginForm() {
           </p>
 
           {/* Rotating testimonial */}
-          <motion.div
+          <div
             key={testimonialIdx}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white/20 backdrop-blur-sm rounded-2xl p-5 border border-white/20 max-w-xs"
+            className="bg-white/20 backdrop-blur-sm rounded-2xl p-5 border border-white/20 max-w-xs transition-opacity duration-300"
           >
             <p className="text-white text-sm italic leading-relaxed" style={{ fontFamily: "var(--font-playfair), serif" }}>
               &ldquo;{TESTIMONIALS[testimonialIdx].text}&rdquo;
@@ -122,7 +104,7 @@ function LoginForm() {
             <p className="text-white/70 text-xs mt-2" style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}>
               — {TESTIMONIALS[testimonialIdx].author}
             </p>
-          </motion.div>
+          </div>
         </div>
 
         {/* Decorative dots */}
@@ -136,14 +118,11 @@ function LoginForm() {
             />
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* ── Right form panel ────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-[#FFF9EE]">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+        <div
           className="w-full max-w-md"
         >
           {/* Mobile brand */}
@@ -169,25 +148,30 @@ function LoginForm() {
             </p>
           </div>
 
+          {/* Success Message from Verification */}
+          {searchParams.get("verified") === "true" && (
+            <div
+              className="mb-5 px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm"
+              style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
+            >
+              Email verified successfully! Please log in to continue.
+            </div>
+          )}
+
           {/* Error */}
           {error && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
+            <div
               className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm"
               style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
             >
               {error}
-            </motion.div>
+            </div>
           )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
-            <motion.div
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.25 }}
+            <div
               className="group"
             >
               <label
@@ -205,14 +189,10 @@ function LoginForm() {
                 className="w-full px-0 py-3 bg-transparent border-0 border-b-2 border-[#FFE4C2] focus:border-[#FFB449] focus:outline-none transition-colors text-[#1A1A1A] placeholder-[#C4C4C4]"
                 style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
               />
-            </motion.div>
+            </div>
 
             {/* Password */}
-            <motion.div
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.32 }}
-            >
+            <div>
               <label
                 className="block text-xs font-semibold text-[#6B6B6B] uppercase tracking-widest mb-1.5"
                 style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
@@ -238,13 +218,10 @@ function LoginForm() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </motion.div>
+            </div>
 
             {/* Submit */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+            <div
               className="pt-2"
             >
               <button
@@ -271,7 +248,7 @@ function LoginForm() {
                   </span>
                 )}
               </button>
-            </motion.div>
+            </div>
           </form>
 
           {/* Divider */}
@@ -294,7 +271,7 @@ function LoginForm() {
           >
             Create an account
           </Link>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

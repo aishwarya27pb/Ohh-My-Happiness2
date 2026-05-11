@@ -35,6 +35,9 @@ export async function middleware(request: NextRequest) {
         )
       );
     }
+    if (path === "/account") {
+      return NextResponse.redirect(new URL("/account/orders", request.url));
+    }
   }
 
   return supabaseResponse;

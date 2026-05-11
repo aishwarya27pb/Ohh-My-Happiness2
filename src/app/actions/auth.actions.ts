@@ -11,7 +11,7 @@ export async function signUp(formData: {
   password: string;
   firstName: string;
   lastName: string;
-  phone?: string;
+  phone: string;
 }): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient();
 
@@ -19,6 +19,7 @@ export async function signUp(formData: {
     email: formData.email,
     password: formData.password,
     options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       data: {
         role: "customer",
         first_name: formData.firstName,
@@ -54,7 +55,7 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: error.message };
 
-  redirect(nextPath ?? "/account");
+  redirect(nextPath ?? "/");
 }
 
 // ── Admin sign-in ───────────────────────────────────────────────────────────
@@ -84,6 +85,34 @@ export async function adminSignIn(
   }
 
   redirect("/admin");
+}
+
+// ── Admin sign-up ───────────────────────────────────────────────────────────
+
+export async function adminSignUp(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/admin/login`,
+      data: {
+        role: "admin",
+        first_name: firstName,
+        last_name: lastName,
+      },
+    },
+  });
+
+  if (error) return { error: error.message };
+
+  return {};
 }
 
 // ── Sign-out ────────────────────────────────────────────────────────────────

@@ -115,6 +115,7 @@ export default function ProfilePage() {
               type="tel"
               value={form.phone}
               onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              required
               placeholder="+91 98765 43210"
               className="w-full px-4 py-3 rounded-2xl border-2 border-[#FFE4C2] focus:border-[#FFB449] focus:outline-none text-sm bg-transparent"
             />

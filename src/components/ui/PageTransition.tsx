@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 const variants = {
-  hidden:  { opacity: 0, y: 18 },
-  enter:   { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" as const } },
-  exit:    { opacity: 0, y: -12, transition: { duration: 0.28, ease: "easeIn" as const } },
+  hidden:  { opacity: 0, y: 10 },
+  enter:   { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" as const } },
+  exit:    { opacity: 0, y: -10, transition: { duration: 0.15, ease: "easeIn" as const } },
 };
 
 export default function PageTransition({ children }: { children: ReactNode }) {

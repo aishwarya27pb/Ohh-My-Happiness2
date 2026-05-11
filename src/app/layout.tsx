@@ -3,6 +3,7 @@ import { Geist, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { Toaster } from "react-hot-toast";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -67,6 +68,7 @@ export default function RootLayout({
         <CartProvider>
           <WishlistProvider>
             {children}
+            <Toaster position="bottom-right" />
           </WishlistProvider>
         </CartProvider>
       </body>

@@ -376,6 +376,8 @@ function SignupForm() {
                   >
                     Sign in
                   </Link>
+                </span>
+              </div>
             )}
           </>
         </div>

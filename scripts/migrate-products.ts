@@ -1,3 +1,4 @@
+/*
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import { categories, products } from '../src/data/products.backup.js';
@@ -83,3 +84,4 @@ async function migrate() {
 }
 
 migrate();
+*/

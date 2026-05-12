@@ -8,12 +8,17 @@ export const metadata: Metadata = {
 
 import { productsService } from "@/lib/services/products.service";
 
+import { Suspense } from "react";
+
 export default async function StorePage() {
   const [products, categories] = await Promise.all([
     productsService.getProducts(),
     productsService.getCategories(),
   ]);
 
-  return <StoreClient initialProducts={products} initialCategories={categories} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FFF9EE] flex items-center justify-center">Loading Store...</div>}>
+      <StoreClient initialProducts={products} initialCategories={categories} />
+    </Suspense>
+  );
 }
-

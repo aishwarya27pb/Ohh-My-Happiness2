@@ -229,8 +229,20 @@ function LoginForm() {
             </div>
           )}
 
-          {otpStep === "verify" ? (
-             <div className="space-y-6">
+          {/* Error */}
+          {error && (
+            <div
+              className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium"
+              style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {otpStep === "verify" ? (
+              <div className="space-y-6">
                 <div className="group text-center">
                   <label className="block text-xs font-semibold text-[#6B6B6B] uppercase tracking-widest mb-4">
                     6-Digit Verification Code
@@ -253,21 +265,9 @@ function LoginForm() {
                 >
                   Change Email/Phone
                 </button>
-             </div>
-          ) : (
-            <>
-              {/* Error */}
-              {error && (
-                <div
-                  className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium"
-                  style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
-                >
-                  {error}
-                </div>
-              )}
-
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
+              </div>
+            ) : (
+              <>
                 {/* Email or Phone */}
                 <div className="group">
                   <label className="block text-xs font-semibold text-[#6B6B6B] uppercase tracking-widest mb-1.5">
@@ -293,7 +293,7 @@ function LoginForm() {
                       <label className="block text-xs font-semibold text-[#6B6B6B] uppercase tracking-widest">
                         Password
                       </label>
-                      <Link href="/auth/forgot-password" size={19} className="text-xs text-[#FF8A00] hover:underline">
+                      <Link href="/auth/forgot-password" className="text-xs text-[#FF8A00] hover:underline">
                         Forgot Password?
                       </Link>
                     </div>
@@ -316,45 +316,45 @@ function LoginForm() {
                     </div>
                   </div>
                 )}
+              </>
+            )}
 
-                {/* Submit */}
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isLoading || resendTimer > 0}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold text-white transition-all duration-300 disabled:opacity-60 shadow-xl shadow-[#FF8A00]/20"
-                    style={{ 
-                      background: resendTimer > 0 
-                        ? "#6B6B6B" 
-                        : "linear-gradient(135deg, #FFB449 0%, #FF8A00 100%)" 
-                    }}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="animate-spin" size={20} />
+            {/* Submit */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoading || resendTimer > 0}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold text-white transition-all duration-300 disabled:opacity-60 shadow-xl shadow-[#FF8A00]/20"
+                style={{ 
+                  background: resendTimer > 0 
+                    ? "#6B6B6B" 
+                    : "linear-gradient(135deg, #FFB449 0%, #FF8A00 100%)" 
+                }}
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    {resendTimer > 0 ? (
+                      <span className="flex items-center gap-2">
+                        Wait {resendTimer}s
+                      </span>
                     ) : (
                       <>
-                        {resendTimer > 0 ? (
-                          <span className="flex items-center gap-2">
-                            Wait {resendTimer}s
-                          </span>
-                        ) : (
-                          <>
-                            {otpStep === "verify" ? "Verify & Login" : loginMode === "password" ? "Sign In" : "Send Login Code"}
-                            <ArrowRight size={16} />
-                          </>
-                        )}
+                        {otpStep === "verify" ? "Verify & Login" : loginMode === "password" ? "Sign In" : "Send Login Code"}
+                        <ArrowRight size={16} />
                       </>
                     )}
-                  </button>
-                  {resendTimer > 0 && (
-                    <p className="mt-4 text-center text-xs text-orange-600 font-bold animate-pulse">
-                      Rate limit reached. Please wait {resendTimer} seconds before retrying.
-                    </p>
-                  )}
-                </div>
-              </form>
-            </>
-          )}
+                  </>
+                )}
+              </button>
+              {resendTimer > 0 && (
+                <p className="mt-4 text-center text-xs text-orange-600 font-bold animate-pulse">
+                  Rate limit reached. Please wait {resendTimer} seconds before retrying.
+                </p>
+              )}
+            </div>
+          </form>
 
           {/* Divider */}
           <div className="my-8 flex items-center gap-3">

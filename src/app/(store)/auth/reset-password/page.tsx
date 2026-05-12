@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { updatePassword, getSession } from "@/app/actions/auth.actions";
-import { Lock, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Lock, Loader2, CheckCircle2, ShieldCheck, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function ResetPasswordPage() {

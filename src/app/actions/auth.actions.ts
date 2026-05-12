@@ -174,12 +174,11 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
 
 export async function verifyOTP(identifier: string, token: string, type: "email" | "phone" = "email") {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.verifyOtp({
-    email: type === "email" ? identifier : undefined,
-    phone: type === "phone" ? identifier : undefined,
-    token,
-    type: type === "email" ? "email" : "sms",
-  });
+  const verifyParams = type === "email" 
+    ? { email: identifier, token, type: "email" as const }
+    : { phone: identifier, token, type: "sms" as const };
+
+  const { data, error } = await supabase.auth.verifyOtp(verifyParams);
   
   if (error) return { error: error.message };
   return { success: true };

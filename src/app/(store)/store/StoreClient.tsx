@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { products, categories } from "@/data/products";
+import { useState, useMemo, useEffect } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
-import { Filter, X, SlidersHorizontal } from "lucide-react";
+import { Filter, X, SlidersHorizontal, Loader2 } from "lucide-react";
+import { productsService } from "@/lib/services/products.service";
+import type { Product, Category } from "@/types";
+import { useSearchParams } from "next/navigation";
 
 const priceRanges = [
   { label: "Under ₹500", min: 0, max: 500 },
@@ -22,12 +24,30 @@ const sortOptions = [
   { label: "Newest", value: "newest" },
 ];
 
-export default function StoreClient() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+interface StoreClientProps {
+  initialProducts: Product[];
+  initialCategories: Category[];
+}
+
+export default function StoreClient({ initialProducts, initialCategories }: StoreClientProps) {
+  const searchParams = useSearchParams();
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [loading, setLoading] = useState(false);
+
+  // Sync state when props change (on-demand revalidation)
+  useEffect(() => {
+    setProducts(initialProducts);
+    setCategories(initialCategories);
+  }, [initialProducts, initialCategories]);
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("category") || "all");
   const [selectedPrice, setSelectedPrice] = useState<string>("");
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+
 
   const filtered = useMemo(() => {
     let list = [...products];
@@ -69,7 +89,7 @@ export default function StoreClient() {
     }
 
     return list;
-  }, [selectedCategory, selectedPrice, sortBy, searchQuery]);
+  }, [selectedCategory, selectedPrice, sortBy, searchQuery, products]);
 
   const clearFilters = () => {
     setSelectedCategory("all");
@@ -113,15 +133,40 @@ export default function StoreClient() {
             )}
           </div>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 rounded-2xl border-2 border-[#FFE4C2] bg-white focus:outline-none focus:border-[#FFB449] text-sm font-medium"
-          >
-            {sortOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <div className="relative group min-w-[180px]">
+            <button
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border-2 border-[#FFE4C2] bg-white text-sm font-medium hover:border-[#FFB449] transition-all"
+            >
+              <span>{sortOptions.find(o => o.value === sortBy)?.label}</span>
+              <SlidersHorizontal size={14} className="text-[#FF8A00]" />
+            </button>
+            
+            {showSortDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowSortDropdown(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 w-full bg-white rounded-2xl shadow-xl border-2 border-[#FFE4C2] z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  {sortOptions.map((o) => (
+                    <button
+                      key={o.value}
+                      onClick={() => {
+                        setSortBy(o.value);
+                        setShowSortDropdown(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-[#FFF9EE] ${
+                        sortBy === o.value ? "text-[#FF8A00] font-bold bg-[#FFF9EE]" : "text-[#1A1A1A]"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -143,21 +188,27 @@ export default function StoreClient() {
               <div className="space-y-2">
                 <button
                   onClick={() => setSelectedCategory("all")}
-                  className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors ${
-                    selectedCategory === "all" ? "bg-[#FFB449] text-[#1A1A1A] font-bold" : "text-[#6B6B6B] hover:bg-[#FFF9EE]"
+                  className={`w-full text-left text-sm px-4 py-2.5 rounded-xl transition-all flex items-center justify-between group ${
+                    selectedCategory === "all" 
+                      ? "bg-[#FFB449] text-[#1A1A1A] font-bold shadow-md shadow-[#FFB449]/20 translate-x-1" 
+                      : "text-[#6B6B6B] hover:bg-[#FFF9EE] hover:text-[#1A1A1A]"
                   }`}
                 >
-                  All Categories
+                  <span>All Categories</span>
+                  {selectedCategory === "all" && <div className="w-1.5 h-1.5 rounded-full bg-[#1A1A1A]" />}
                 </button>
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.slug)}
-                    className={`w-full text-left text-sm px-3 py-2 rounded-xl transition-colors ${
-                      selectedCategory === cat.slug ? "bg-[#FFB449] text-[#1A1A1A] font-bold" : "text-[#6B6B6B] hover:bg-[#FFF9EE]"
+                    className={`w-full text-left text-sm px-4 py-2.5 rounded-xl transition-all flex items-center justify-between group ${
+                      selectedCategory === cat.slug 
+                        ? "bg-[#FFB449] text-[#1A1A1A] font-bold shadow-md shadow-[#FFB449]/20 translate-x-1" 
+                        : "text-[#6B6B6B] hover:bg-[#FFF9EE] hover:text-[#1A1A1A]"
                     }`}
                   >
-                    {cat.name}
+                    <span>{cat.name}</span>
+                    {selectedCategory === cat.slug && <div className="w-1.5 h-1.5 rounded-full bg-[#1A1A1A]" />}
                   </button>
                 ))}
               </div>
@@ -195,11 +246,16 @@ export default function StoreClient() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-[#6B6B6B]">
-                <span className="font-bold text-[#1A1A1A]">{filtered.length}</span> gifts found
+                <span className="font-bold text-[#1A1A1A]">{loading ? 0 : filtered.length}</span> gifts found
               </p>
             </div>
 
-            {filtered.length > 0 ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 text-[#FF8A00] animate-spin mb-4" />
+                <p className="text-[#6B6B6B]">Loading gifts...</p>
+              </div>
+            ) : filtered.length > 0 ? (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filtered.map((p) => (
                   <ProductCard key={p.id} product={p} />

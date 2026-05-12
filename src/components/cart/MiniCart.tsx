@@ -40,9 +40,13 @@ export default function MiniCart() {
               <ShoppingBag size={48} className="text-[#FFE4C2] mb-4" />
               <p className="font-semibold text-[#1A1A1A] mb-1">Your cart is empty</p>
               <p className="text-sm text-[#6B6B6B] mb-4">Add some happiness to your cart!</p>
-              <button onClick={closeCart} className="btn-primary text-sm py-2 px-6">
+              <Link
+                href="/store"
+                onClick={closeCart}
+                className="btn-primary text-sm py-2 px-6"
+              >
                 Start Shopping
-              </button>
+              </Link>
             </div>
           ) : (
             state.items.map((item) => (

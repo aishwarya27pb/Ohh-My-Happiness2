@@ -29,9 +29,11 @@ A gifting e-commerce platform built for the Indian market — offering curated h
 | Styling | Tailwind CSS v4 |
 | Language | TypeScript 5 |
 | Icons | lucide-react |
-| Animations | framer-motion *(installed, not yet wired)* |
-| Notifications | react-hot-toast *(installed, not yet wired)* |
-| Rendering | Static Export (33 pre-rendered pages) |
+| Animations | framer-motion |
+| Notifications | react-hot-toast |
+| Rendering | Dynamic & Static Export |
+| Database & Auth | Supabase Postgres & Auth |
+| Storage | Supabase Storage (Signed URLs) |
 
 ---
 
@@ -132,14 +134,9 @@ src/
 
 | Area | Status |
 |------|--------|
-| Product images | Emoji placeholders — no real image assets yet |
-| Payment processing | Razorpay/UPI/COD UI exists; no live SDK |
+| Payment processing | Razorpay/UPI/COD UI exists; no live SDK yet |
 | Blog content | Post `content` fields are empty — only excerpts populated |
-| File uploads | Custom orders form UI exists; upload not connected |
-| Authentication | No user login/signup |
-| Backend | Fully static — no database or API |
-| Animations | framer-motion installed but not used |
-| Notifications | react-hot-toast installed but not used |
+| Client Auth | Only Admin auth is active. Customer auth via OTP is pending full implementation. |
 
 ---
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { products } from "@/data/products";
+
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { ArrowRight } from "lucide-react";
@@ -30,10 +30,14 @@ const collections = [
   { icon: "🤝", title: "For Friends", desc: "Fun, quirky, and thoughtful gifts to celebrate your best friendships.", href: "/store?for=friends" },
 ];
 
-export default function PersonalGiftingPage() {
+import { productsService } from "@/lib/services/products.service";
+
+export default async function PersonalGiftingPage() {
+  const products = await productsService.getProducts();
   const personalProducts = products.filter((p) =>
     ["personalized-gifts", "festival-gifts", "luxury-collections", "wellness-kits"].includes(p.category)
   );
+
 
   return (
     <>

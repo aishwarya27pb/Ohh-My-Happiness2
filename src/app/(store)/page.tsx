@@ -13,14 +13,18 @@ export const metadata: Metadata = {
     "India's most trusted gifting brand. Premium corporate hampers, personalized gifts, festival collections and bulk gifting solutions. Your requirement is our responsibility.",
 };
 
-export default function HomePage() {
+import { productsService } from "@/lib/services/products.service";
+
+export default async function HomePage() {
+  const products = await productsService.getProducts();
+
   return (
     <>
       <Hero />
       <CategoryGrid />
-      <BestsellerSection />
+      <BestsellerSection products={products} />
       <CorporateBanner />
-      <FeaturedProducts />
+      <FeaturedProducts products={products} />
       <HowItWorks />
       <TestimonialSlider />
     </>

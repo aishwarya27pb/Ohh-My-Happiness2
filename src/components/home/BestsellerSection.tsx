@@ -1,14 +1,14 @@
 "use client";
 
-import { products } from "@/data/products";
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal, StaggerReveal, staggerItem } from "@/components/ui/Reveal";
 import { motion } from "framer-motion";
+import type { Product } from "@/types";
 
-export default function BestsellerSection() {
+export default function BestsellerSection({ products }: { products: Product[] }) {
   const bestsellers = products.filter((p) => p.isBestseller).slice(0, 4);
 
   return (

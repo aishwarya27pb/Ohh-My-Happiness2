@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  couponCode: string | null;
 }
 
 type CartAction =
@@ -16,11 +17,14 @@ type CartAction =
   | { type: "CLEAR_CART" }
   | { type: "TOGGLE_CART" }
   | { type: "OPEN_CART" }
-  | { type: "CLOSE_CART" };
+  | { type: "CLOSE_CART" }
+  | { type: "APPLY_COUPON"; payload: string }
+  | { type: "REMOVE_COUPON" };
 
 const initialState: CartState = {
   items: [],
   isOpen: false,
+  couponCode: null,
 };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
@@ -69,6 +73,10 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return { ...state, isOpen: true };
     case "CLOSE_CART":
       return { ...state, isOpen: false };
+    case "APPLY_COUPON":
+      return { ...state, couponCode: action.payload };
+    case "REMOVE_COUPON":
+      return { ...state, couponCode: null };
     default:
       return state;
   }
@@ -85,6 +93,10 @@ interface CartContextValue {
   closeCart: () => void;
   totalItems: number;
   subtotal: number;
+  discount: number;
+  couponCode: string | null;
+  applyCoupon: (code: string) => void;
+  removeCoupon: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -95,7 +107,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem("omh-cart");
       if (stored) {
         try {
-          return { ...initialState, items: JSON.parse(stored) };
+          const parsed = JSON.parse(stored);
+          const storedCoupon = localStorage.getItem("omh-coupon");
+          return { ...initialState, items: parsed, couponCode: storedCoupon };
         } catch {
           return initialState;
         }
@@ -107,6 +121,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem("omh-cart", JSON.stringify(state.items));
   }, [state.items]);
+
+  useEffect(() => {
+    if (state.couponCode) {
+      localStorage.setItem("omh-coupon", state.couponCode);
+    } else {
+      localStorage.removeItem("omh-coupon");
+    }
+  }, [state.couponCode]);
 
   // Clear cart when the signed-in user changes (sign out, or different user)
   useEffect(() => {
@@ -132,6 +154,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const totalItems = state.items.reduce((acc: number, item: CartItem) => acc + item.quantity, 0);
   const subtotal = state.items.reduce((acc: number, item: CartItem) => acc + item.product.price * item.quantity, 0);
 
+  // For now, hardcode the logic for "HAPPY10"
+  const discount = state.couponCode?.toUpperCase() === "HAPPY10" ? Math.round(subtotal * 0.1) : 0;
+
   return (
     <CartContext.Provider
       value={{
@@ -146,6 +171,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         closeCart: () => dispatch({ type: "CLOSE_CART" }),
         totalItems,
         subtotal,
+        discount,
+        couponCode: state.couponCode,
+        applyCoupon: (code) => dispatch({ type: "APPLY_COUPON", payload: code }),
+        removeCoupon: () => dispatch({ type: "REMOVE_COUPON" }),
       }}
     >
       {children}

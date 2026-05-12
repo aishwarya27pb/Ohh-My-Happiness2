@@ -1,14 +1,14 @@
 "use client";
 
-import { products } from "@/data/products";
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Reveal, StaggerReveal, staggerItem } from "@/components/ui/Reveal";
 import { motion } from "framer-motion";
+import type { Product } from "@/types";
 
-export default function FeaturedProducts() {
+export default function FeaturedProducts({ products }: { products: Product[] }) {
   const featured = products.filter((p) => p.isFeatured).slice(0, 4);
 
   return (

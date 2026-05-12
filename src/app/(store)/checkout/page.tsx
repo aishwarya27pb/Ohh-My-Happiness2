@@ -19,11 +19,11 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isPlacing, setIsPlacing] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
-  const { state, subtotal, clearCart } = useCart();
+  const { state, subtotal, clearCart, discount, couponCode } = useCart();
   const router = useRouter();
 
   const shipping = subtotal >= 999 ? 0 : 99;
-  const total = subtotal + shipping;
+  const total = subtotal - discount + shipping;
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -43,7 +43,7 @@ export default function CheckoutPage() {
     const result = await createOrderAction(state.items, form, {
       subtotal,
       shipping,
-      discount: 0,
+      discount,
       total,
     });
     if ("error" in result && result.error) {
@@ -285,6 +285,12 @@ export default function CheckoutPage() {
               <span className="text-[#6B6B6B]">Shipping</span>
               <span className={shipping === 0 ? "text-green-600" : ""}>{shipping === 0 ? "FREE" : `₹${shipping}`}</span>
             </div>
+            {couponCode && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount ({couponCode})</span>
+                <span>-₹{discount.toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between font-black text-base pt-2 border-t border-[#FFE4C2]">
               <span>Total</span>
               <span className="text-[#FF8A00]">₹{total.toLocaleString()}</span>

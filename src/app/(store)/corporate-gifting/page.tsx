@@ -33,8 +33,8 @@ export default function CorporateGiftingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] py-20 lg:py-28 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
+      <section className="relative bg-gradient-to-br from-[#FFE4C2] to-[#FFF9EE] py-20 lg:py-28 overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFB449] rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#FF8A00] rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
         </div>
@@ -42,17 +42,17 @@ export default function CorporateGiftingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#FFB449] bg-[#FFB449]/10 px-4 py-1.5 rounded-full mb-6">
+              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#FF8A00] bg-white px-4 py-1.5 rounded-full mb-6 shadow-sm">
                 Corporate Gifting Solutions
               </span>
-              <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight mb-4">
+              <h1 className="text-4xl lg:text-5xl font-black text-[#1A1A1A] leading-tight mb-4">
                 Gifting at Scale,{" "}
-                <span className="text-[#FFB449]">Done Right</span>
+                <span className="text-[#FF8A00]">Done Right</span>
               </h1>
-              <p className="text-white/70 text-lg mb-3 leading-relaxed">
+              <p className="text-[#6B6B6B] text-lg mb-3 leading-relaxed">
                 From 10 to 10,000 — we handle every corporate gifting need with precision, quality, and your brand identity front and center.
               </p>
-              <p className="text-[#FFB449] italic font-semibold mb-8">
+              <p className="text-[#FF8A00] italic font-semibold mb-8">
                 "Your requirement is our responsibility."
               </p>
 
@@ -60,7 +60,7 @@ export default function CorporateGiftingPage() {
                 <Link href="/custom-orders" className="btn-primary flex items-center justify-center gap-2">
                   Request Bulk Quote <ArrowRight size={16} />
                 </Link>
-                <a href="tel:+919999999999" className="btn-outline border-white/30 text-white hover:bg-white hover:text-[#1A1A1A] flex items-center justify-center gap-2">
+                <a href="tel:+919999999999" className="btn-outline border-[#1A1A1A]/20 text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white flex items-center justify-center gap-2">
                   <Phone size={16} /> Call Us Now
                 </a>
               </div>
@@ -73,10 +73,10 @@ export default function CorporateGiftingPage() {
                 { icon: "⭐", value: "4.9/5", label: "Satisfaction Rate" },
                 { icon: "🚀", value: "48hrs", label: "Bulk Dispatch" },
               ].map(({ icon, value, label }) => (
-                <div key={label} className="bg-white/5 border border-white/10 rounded-3xl p-6 text-center">
+                <div key={label} className="bg-white border border-[#FFE4C2] rounded-3xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
                   <div className="text-4xl mb-2">{icon}</div>
-                  <p className="text-2xl font-black text-[#FFB449]">{value}</p>
-                  <p className="text-xs text-white/60 mt-1">{label}</p>
+                  <p className="text-2xl font-black text-[#1A1A1A]">{value}</p>
+                  <p className="text-xs text-[#6B6B6B] mt-1 font-medium">{label}</p>
                 </div>
               ))}
             </div>

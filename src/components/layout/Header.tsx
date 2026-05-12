@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
@@ -11,18 +11,33 @@ import MiniCart from "@/components/cart/MiniCart";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
+import { productsService } from "@/lib/services/products.service";
+import type { Product } from "@/types";
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const { totalItems, toggleCart, state } = useCart();
   const { count: wishlistCount } = useWishlist();
+
+  useEffect(() => {
+    async function loadProducts() {
+      const data = await productsService.getProducts();
+      setProducts(data);
+    }
+    loadProducts();
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -62,10 +77,37 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Search logic
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      const q = searchQuery.toLowerCase();
+      const filtered = products
+        .filter(p =>
+          p.name.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q) ||
+          p.tags.some(t => t.toLowerCase().includes(q))
+        )
+        .slice(0, 5);
+      setSuggestions(filtered);
+    } else {
+      setSuggestions([]);
+    }
+  }, [searchQuery]);
+
+  const handleSearchSelect = (slug: string) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSuggestions([]);
+    router.push(`/store/${slug}`);
+  };
 
   const navLinks = [
     { label: "Home", href: "/" },
@@ -113,16 +155,23 @@ export default function Header() {
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-[13px] font-semibold text-[#1A1A1A] hover:text-[#FF8A00] transition-colors relative group whitespace-nowrap"
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FFB449] transition-all group-hover:w-full" />
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`text-[13px] font-semibold transition-colors relative group whitespace-nowrap ${
+                      isActive ? "text-[#FF8A00]" : "text-[#1A1A1A] hover:text-[#FF8A00]"
+                    }`}
+                  >
+                    {link.label}
+                    <span className={`absolute -bottom-1 left-0 h-0.5 bg-[#FFB449] transition-all ${
+                      isActive ? "w-full" : "w-0 group-hover:w-full"
+                    }`} />
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Actions */}
@@ -268,16 +317,55 @@ export default function Header() {
 
           {/* Search Bar */}
           {searchOpen && (
-            <div className="pb-4 animate-in slide-in-from-top-2">
+            <div className="pb-4 animate-in slide-in-from-top-2 relative" ref={searchRef}>
               <div className="relative">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B]" />
                 <input
                   type="text"
                   placeholder="Search for gifts, hampers, occasions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-[#FFE4C2] bg-white focus:outline-none focus:border-[#FFB449] text-sm"
                   autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && searchQuery.trim()) {
+                      setSearchOpen(false);
+                      router.push(`/store?search=${searchQuery}`);
+                    }
+                  }}
                 />
               </div>
+
+              {/* Suggestions dropdown */}
+              {suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full -mt-2 bg-white rounded-2xl shadow-xl border border-[#FFE4C2] z-[100] overflow-hidden">
+                  <div className="p-2">
+                    {suggestions.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleSearchSelect(p.slug)}
+                        className="w-full flex items-center gap-3 p-2.5 hover:bg-[#FFF9EE] rounded-xl transition-colors text-left"
+                      >
+                        <div className="w-10 h-10 bg-[#FFE4C2] rounded-lg flex items-center justify-center text-xl shrink-0">🎁</div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#1A1A1A] truncate">{p.name}</p>
+                          <p className="text-[11px] text-[#6B6B6B] truncate capitalize">{p.category.replace(/-/g, " ")}</p>
+                        </div>
+                        <span className="ml-auto text-xs font-bold text-[#FF8A00]">₹{p.price.toLocaleString()}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSearchOpen(false);
+                      router.push(`/store?search=${searchQuery}`);
+                    }}
+                    className="w-full py-2.5 bg-[#FFF9EE] text-[#FF8A00] text-xs font-bold hover:bg-[#FFE4C2] transition-colors border-t border-[#FFE4C2]"
+                  >
+                    View all results for &quot;{searchQuery}&quot;
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -286,16 +374,21 @@ export default function Header() {
         {menuOpen && (
           <div className="lg:hidden bg-white border-t border-[#FFE4C2] shadow-lg">
             <nav className="flex flex-col px-4 py-4 gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="py-3 px-4 rounded-xl text-sm font-semibold text-[#1A1A1A] hover:bg-[#FFF9EE] hover:text-[#FF8A00] transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`py-3 px-4 rounded-xl text-sm font-semibold transition-colors ${
+                      isActive ? "bg-[#FFF9EE] text-[#FF8A00]" : "text-[#1A1A1A] hover:bg-[#FFF9EE] hover:text-[#FF8A00]"
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               <Link
                 href="/custom-orders"
                 className="mt-3 btn-primary text-center text-sm"

@@ -6,19 +6,17 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Tag } from "lucide-react"
 import { useState } from "react";
 
 export default function CartPage() {
-  const { state, updateQuantity, removeItem, subtotal } = useCart();
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
+  const { state, updateQuantity, removeItem, subtotal, discount, couponCode, applyCoupon, removeCoupon } = useCart();
+  const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
 
   const VALID_COUPON = "HAPPY10";
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const shipping = subtotal >= 999 ? 0 : 99;
   const total = subtotal - discount + shipping;
 
-  const applyCoupon = () => {
-    if (coupon.toUpperCase() === VALID_COUPON) {
-      setCouponApplied(true);
+  const handleApplyCoupon = () => {
+    if (couponInput.toUpperCase() === VALID_COUPON) {
+      applyCoupon(couponInput);
       setCouponError("");
     } else {
       setCouponError("Invalid coupon code.");
@@ -104,18 +102,23 @@ export default function CartPage() {
               <input
                 type="text"
                 placeholder="Enter coupon code"
-                value={coupon}
-                onChange={(e) => { setCoupon(e.target.value); setCouponError(""); }}
+                value={couponInput}
+                onChange={(e) => { setCouponInput(e.target.value); setCouponError(""); }}
                 className="flex-1 px-3 py-2 rounded-xl border-2 border-[#FFE4C2] text-sm focus:outline-none focus:border-[#FFB449] min-w-0"
               />
               <button
-                onClick={applyCoupon}
+                onClick={handleApplyCoupon}
                 className="bg-[#FFB449] text-[#1A1A1A] font-bold text-sm px-4 py-2 rounded-xl hover:bg-[#FF8A00] hover:text-white transition-colors shrink-0"
               >
                 Apply
               </button>
             </div>
-            {couponApplied && <p className="text-xs text-green-600 font-medium mt-2">✓ Coupon applied! 10% off</p>}
+            {couponCode && (
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-green-600 font-medium">✓ Coupon applied! 10% off</p>
+                <button onClick={removeCoupon} className="text-xs text-red-500 hover:underline">Remove</button>
+              </div>
+            )}
             {couponError && <p className="text-xs text-red-500 mt-2">{couponError}</p>}
             <p className="text-xs text-[#6B6B6B] mt-2">Try: <span className="font-bold text-[#FF8A00]">HAPPY10</span></p>
           </div>
@@ -129,9 +132,9 @@ export default function CartPage() {
                 <span className="text-[#6B6B6B]">Subtotal</span>
                 <span className="font-medium">₹{subtotal.toLocaleString()}</span>
               </div>
-              {couponApplied && (
+              {couponCode && (
                 <div className="flex justify-between text-green-600">
-                  <span>Discount (10%)</span>
+                  <span>Discount ({couponCode})</span>
                   <span>-₹{discount.toLocaleString()}</span>
                 </div>
               )}

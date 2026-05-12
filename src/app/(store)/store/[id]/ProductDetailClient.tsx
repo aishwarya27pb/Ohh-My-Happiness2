@@ -11,6 +11,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [added, setAdded] = useState(false);
+  const [mainImage, setMainImage] = useState(product.images?.[0] || "");
 
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
@@ -51,22 +52,41 @@ export default function ProductDetailClient({ product }: { product: Product }) {
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         {/* Image */}
         <div className="space-y-4">
-          <div className="aspect-square bg-gradient-to-br from-[#FFE4C2] to-[#FFF9EE] rounded-3xl flex items-center justify-center text-[120px] relative overflow-hidden">
-            🎁
+          <div className="aspect-square bg-white rounded-3xl flex items-center justify-center relative overflow-hidden border border-[#FFE4C2]/50 shadow-sm">
+            {mainImage ? (
+              <img src={mainImage} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+            ) : (
+              <span className="text-[120px]">🎁</span>
+            )}
+            
             {product.isBestseller && (
-              <span className="absolute top-4 left-4 bg-[#FFB449] text-[#1A1A1A] text-xs font-bold px-3 py-1 rounded-full">
+              <span className="absolute top-4 left-4 bg-[#FFB449] text-[#1A1A1A] text-xs font-bold px-3 py-1 rounded-full shadow-sm">
                 Bestseller
               </span>
             )}
+            {product.isNew && (
+              <span className="absolute top-4 right-4 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+                New Arrival
+              </span>
+            )}
           </div>
+
           {/* Thumbnail row */}
-          <div className="flex gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-20 h-20 bg-[#FFE4C2] rounded-2xl flex items-center justify-center text-3xl cursor-pointer border-2 border-transparent hover:border-[#FFB449] transition-colors">
-                🎁
-              </div>
-            ))}
-          </div>
+          {product.images && product.images.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {product.images.map((img, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => setMainImage(img)}
+                  className={`flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden cursor-pointer border-2 transition-all ${
+                    mainImage === img ? "border-[#FFB449] scale-95" : "border-transparent hover:border-[#FFE4C2]"
+                  }`}
+                >
+                  <img src={img} alt={`${product.name} ${i}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info */}

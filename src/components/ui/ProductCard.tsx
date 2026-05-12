@@ -14,6 +14,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, className = "" }: ProductCardProps) {
   const [mounted, setMounted] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
 
@@ -30,11 +31,24 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
   return (
     <div className={`group relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${className}`}>
       {/* Image */}
-      <div className="relative aspect-square bg-gradient-to-br from-[#FFE4C2] to-[#FFF9EE] overflow-hidden">
-        {/* Placeholder visual */}
-        <div className="w-full h-full flex items-center justify-center text-6xl">
-          🎁
-        </div>
+      <div className="relative aspect-square bg-[#FFF9EE] overflow-hidden">
+        {/* Product Image */}
+        {product.images && product.images.length > 0 && !imgError ? (
+          <img 
+            src={product.images[0]} 
+            alt={product.name} 
+            onError={() => {
+              console.error(`Failed to load image for ${product.name}:`, product.images[0]);
+              setImgError(true);
+            }}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-6xl">
+            🎁
+          </div>
+        )}
+
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">

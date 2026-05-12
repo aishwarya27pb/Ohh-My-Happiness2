@@ -226,6 +226,121 @@ export interface Database {
         };
         Relationships: [];
       };
+      categories: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          image: string | null;
+          product_count: number;
+          icon: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          image?: string | null;
+          product_count?: number;
+          icon?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          image?: string | null;
+          product_count?: number;
+          icon?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      products: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          price: number;
+          original_price: number | null;
+          images: string[];
+          category_id: string | null;
+          category_slug: string | null;
+          occasion: string[];
+          description: string;
+          short_description: string | null;
+          variants: Json;
+          customizable: boolean;
+          in_stock: boolean;
+          rating: number;
+          review_count: number;
+          tags: string[];
+          is_bestseller: boolean;
+          is_featured: boolean;
+          is_new: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          price: number;
+          original_price?: number | null;
+          images?: string[];
+          category_id?: string | null;
+          category_slug?: string | null;
+          occasion?: string[];
+          description: string;
+          short_description?: string | null;
+          variants?: Json;
+          customizable?: boolean;
+          in_stock?: boolean;
+          rating?: number;
+          review_count?: number;
+          tags?: string[];
+          is_bestseller?: boolean;
+          is_featured?: boolean;
+          is_new?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          slug?: string;
+          price?: number;
+          original_price?: number | null;
+          images?: string[];
+          category_id?: string | null;
+          category_slug?: string | null;
+          occasion?: string[];
+          description?: string;
+          short_description?: string | null;
+          variants?: Json;
+          customizable?: boolean;
+          in_stock?: boolean;
+          rating?: number;
+          review_count?: number;
+          tags?: string[];
+          is_bestseller?: boolean;
+          is_featured?: boolean;
+          is_new?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Functions: {
       is_admin: {
@@ -265,6 +380,14 @@ export type CustomOrderInsert =
   Database["public"]["Tables"]["custom_order_requests"]["Insert"];
 export type LeadUpdate =
   Database["public"]["Tables"]["custom_order_requests"]["Update"];
+
+export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
+export type CategoryInsert = Database["public"]["Tables"]["categories"]["Insert"];
+export type CategoryUpdate = Database["public"]["Tables"]["categories"]["Update"];
+
+export type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
 // ---------------------------------------------------------------------------
 // Composite types used across the app

@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -72,9 +73,17 @@ function AdminLoginForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-widest">
+                Password
+              </label>
+              <Link 
+                href="/admin/forgot-password" 
+                className="text-xs text-[#FFB449] hover:underline transition-colors"
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}

@@ -12,13 +12,17 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Sign out immediately so the user is forced to log in manually
-      await supabase.auth.signOut();
+      const isPasswordReset = next.includes("reset-password");
       
-      const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
+      // Only sign out if it's NOT a password reset
+      if (!isPasswordReset) {
+        await supabase.auth.signOut();
+      }
+      
+      const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
       
-      const redirectPath = "/auth/login?verified=true";
+      let redirectPath = isPasswordReset ? next : "/auth/login?verified=true";
       
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${redirectPath}`);

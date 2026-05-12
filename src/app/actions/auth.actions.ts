@@ -132,3 +132,55 @@ export async function getSession() {
   } = await supabase.auth.getUser();
   return user;
 }
+
+// ── Password Reset ──────────────────────────────────────────────────────────
+
+export async function resetPasswordForEmail(email: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/auth/reset-password`,
+  });
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+export async function updatePassword(password: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: error.message };
+  return { success: true };
+}
+
+// ── OTP / Magic Link Login ────────────────────────────────────────────────
+
+export async function signInWithOTP(identifier: string, type: "email" | "phone" = "email") {
+  const supabase = await createClient();
+  if (type === "email") {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: identifier,
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: identifier,
+    });
+    if (error) return { error: error.message };
+  }
+  return { success: true };
+}
+
+export async function verifyOTP(identifier: string, token: string, type: "email" | "phone" = "email") {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: type === "email" ? identifier : undefined,
+    phone: type === "phone" ? identifier : undefined,
+    token,
+    type: type === "email" ? "email" : "sms",
+  });
+  
+  if (error) return { error: error.message };
+  return { success: true };
+}

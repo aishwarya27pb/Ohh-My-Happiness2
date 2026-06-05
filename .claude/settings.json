@@ -13,7 +13,10 @@
       "Read(//Users/aishwaryabadiger/**)",
       "Bash(node -e ' *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://siotvawafzrxnchssebk.supabase.co/rest/v1/\")",
-      "Bash(curl -v \"https://siotvawafzrxnchssebk.supabase.co\")"
+      "Bash(curl -v \"https://siotvawafzrxnchssebk.supabase.co\")",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ],
     "additionalDirectories": [
       "/Users/aishwaryabadiger/.claude",

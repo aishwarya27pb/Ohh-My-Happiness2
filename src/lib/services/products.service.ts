@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import type { Product, Category } from "@/types";
 import type { ProductRow, CategoryRow } from "@/lib/supabase/types";
 
@@ -17,6 +17,8 @@ function mapProduct(row: ProductRow): Product {
     variants: (row.variants as any) ?? [],
     customizable: row.customizable,
     inStock: row.in_stock,
+    stockQuantity: row.stock_quantity,
+    lowStockThreshold: row.low_stock_threshold,
     rating: row.rating,
     reviewCount: row.review_count,
     tags: row.tags,
@@ -40,7 +42,7 @@ function mapCategory(row: CategoryRow): Category {
 
 export const productsService = {
   async getProducts(): Promise<Product[]> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -61,23 +63,23 @@ export const productsService = {
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
       .eq("slug", slug)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error(`Error fetching product ${slug}:`, error);
       return null;
     }
 
-    return mapProduct(data);
+    return data ? mapProduct(data) : null;
   },
 
   async getCategories(): Promise<Category[]> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("categories")
       .select("*")
@@ -92,7 +94,7 @@ export const productsService = {
   },
 
   async getFeaturedProducts(): Promise<Product[]> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -108,7 +110,7 @@ export const productsService = {
   },
 
   async getProductById(id: string): Promise<Product | null> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -124,7 +126,7 @@ export const productsService = {
   },
 
   async createProduct(product: any): Promise<{ data: Product | null; error: any }> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
       .insert(product)
@@ -135,7 +137,7 @@ export const productsService = {
   },
 
   async updateProduct(id: string, updates: any): Promise<{ data: Product | null; error: any }> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("products")
       .update(updates)
@@ -147,7 +149,7 @@ export const productsService = {
   },
 
   async deleteProduct(id: string): Promise<{ error: any }> {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error } = await supabase
       .from("products")
       .delete()
@@ -155,4 +157,19 @@ export const productsService = {
 
     return { error };
   },
+
+  async getLowStockProducts(): Promise<Product[]> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .lte("stock_quantity", "low_stock_threshold");
+    
+    if (error) {
+      console.error("Error fetching low stock products:", error);
+      return [];
+    }
+
+    return data.map(mapProduct);
+  }
 };

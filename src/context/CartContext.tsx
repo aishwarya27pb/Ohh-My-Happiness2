@@ -2,12 +2,17 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import type { CartItem, Product } from "@/types";
+import { Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-interface CartState {
+import { saveCartAction, getSavedCartAction } from "@/app/actions/cart.actions";
+import { couponsService, type Coupon } from "@/lib/services/coupons.service";
+
+export interface CartState {
   items: CartItem[];
   isOpen: boolean;
-  couponCode: string | null;
+  appliedCoupon: Coupon | null;
+  couponError: string | null;
 }
 
 type CartAction =
@@ -15,27 +20,42 @@ type CartAction =
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { productId: string; quantity: number } }
   | { type: "CLEAR_CART" }
+  | { type: "SET_CART"; payload: CartItem[] }
   | { type: "TOGGLE_CART" }
   | { type: "OPEN_CART" }
   | { type: "CLOSE_CART" }
-  | { type: "APPLY_COUPON"; payload: string }
-  | { type: "REMOVE_COUPON" };
+  | { type: "SET_COUPON"; payload: Coupon | null }
+  | { type: "SET_COUPON_ERROR"; payload: string | null }
+  | { type: "ADD_CUSTOM_ITEM"; payload: { product: Product; customData: any } };
 
-const initialState: CartState = {
+export const initialState: CartState = {
   items: [],
   isOpen: false,
-  couponCode: null,
+  appliedCoupon: null,
+  couponError: null,
 };
 
-function cartReducer(state: CartState, action: CartAction): CartState {
+export function generateCartItemId(productId: string, variants?: Record<string, string>): string {
+  if (!variants || Object.keys(variants).length === 0) return productId;
+  const variantStr = Object.entries(variants)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}:${v}`)
+    .join("|");
+  return `${productId}-${variantStr}`;
+}
+
+export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
-      const existing = state.items.findIndex((i) => i.product.id === action.payload.product.id);
+      const { product, quantity = 1, selectedVariants } = action.payload;
+      const cartItemId = generateCartItemId(product.id, selectedVariants);
+      
+      const existing = state.items.findIndex((i) => i.id === cartItemId);
       if (existing >= 0) {
         const updated = [...state.items];
         updated[existing] = {
           ...updated[existing],
-          quantity: updated[existing].quantity + (action.payload.quantity || 1),
+          quantity: updated[existing].quantity + quantity,
         };
         return { ...state, items: updated, isOpen: true };
       }
@@ -44,39 +64,60 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         items: [
           ...state.items,
           {
-            product: action.payload.product,
-            quantity: action.payload.quantity || 1,
-            selectedVariants: action.payload.selectedVariants,
+            id: cartItemId,
+            product,
+            quantity,
+            selectedVariants,
           },
         ],
         isOpen: true,
       };
     }
     case "REMOVE_ITEM":
-      return { ...state, items: state.items.filter((i) => i.product.id !== action.payload) };
+      return { ...state, items: state.items.filter((i) => i.id !== action.payload) };
     case "UPDATE_QUANTITY": {
-      if (action.payload.quantity <= 0) {
-        return { ...state, items: state.items.filter((i) => i.product.id !== action.payload.productId) };
+      const { productId: cartItemId, quantity } = action.payload;
+      if (quantity <= 0) {
+        return { ...state, items: state.items.filter((i) => i.id !== cartItemId) };
       }
       return {
         ...state,
         items: state.items.map((i) =>
-          i.product.id === action.payload.productId ? { ...i, quantity: action.payload.quantity } : i
+          i.id === cartItemId ? { ...i, quantity } : i
         ),
       };
     }
     case "CLEAR_CART":
       return { ...state, items: [] };
+    case "SET_CART":
+      return { ...state, items: action.payload };
     case "TOGGLE_CART":
       return { ...state, isOpen: !state.isOpen };
     case "OPEN_CART":
       return { ...state, isOpen: true };
     case "CLOSE_CART":
       return { ...state, isOpen: false };
-    case "APPLY_COUPON":
-      return { ...state, couponCode: action.payload };
-    case "REMOVE_COUPON":
-      return { ...state, couponCode: null };
+    case "SET_COUPON":
+      return { ...state, appliedCoupon: action.payload, couponError: null };
+    case "SET_COUPON_ERROR":
+      return { ...state, couponError: action.payload };
+    case "ADD_CUSTOM_ITEM": {
+      const { product, customData } = action.payload;
+      const cartItemId = product.id; // BYOB items already have unique IDs generated
+      return {
+        ...state,
+        items: [
+          ...state.items,
+          {
+            id: cartItemId,
+            product,
+            quantity: 1,
+            customData,
+          },
+        ],
+        isOpen: true,
+      };
+    }
     default:
       return state;
   }
@@ -95,8 +136,10 @@ interface CartContextValue {
   subtotal: number;
   discount: number;
   couponCode: string | null;
-  applyCoupon: (code: string) => void;
+  couponError: string | null;
+  applyCoupon: (code: string) => Promise<void>;
   removeCoupon: () => void;
+  addCustomItem: (item: any) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -108,8 +151,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
+          // Migration: Add IDs to legacy cart items if missing
+          const itemsWithIds = parsed.map((item: any) => {
+            if (!item.id) {
+              return {
+                ...item,
+                id: generateCartItemId(item.product.id, item.selectedVariants)
+              };
+            }
+            return item;
+          });
+          
           const storedCoupon = localStorage.getItem("omh-coupon");
-          return { ...initialState, items: parsed, couponCode: storedCoupon };
+          const appliedCoupon = storedCoupon ? JSON.parse(storedCoupon) : null;
+          return { ...initialState, items: itemsWithIds, appliedCoupon };
         } catch {
           return initialState;
         }
@@ -118,44 +173,56 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return initialState;
   });
 
+  // Persist to localStorage
   useEffect(() => {
     localStorage.setItem("omh-cart", JSON.stringify(state.items));
   }, [state.items]);
 
+  // Sync to database if logged in
   useEffect(() => {
-    if (state.couponCode) {
-      localStorage.setItem("omh-coupon", state.couponCode);
+    const syncTimeout = setTimeout(async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await saveCartAction(state.items);
+      }
+    }, 1000); // Debounce sync by 1 second
+
+    return () => clearTimeout(syncTimeout);
+  }, [state.items]);
+
+  useEffect(() => {
+    if (state.appliedCoupon) {
+      localStorage.setItem("omh-coupon", JSON.stringify(state.appliedCoupon));
     } else {
       localStorage.removeItem("omh-coupon");
     }
-  }, [state.couponCode]);
+  }, [state.appliedCoupon]);
 
-  // Clear cart when the signed-in user changes (sign out, or different user)
+  // Handle Login/Logout Cart Sync
   useEffect(() => {
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      const newUserId = session?.user?.id ?? null;
-      const storedUserId = localStorage.getItem("omh-cart-owner") ?? null;
-
-      if (newUserId !== storedUserId) {
-        // User changed — clear cart and update the owner tag
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const { cart: savedCart } = await getSavedCartAction();
+        if (savedCart && savedCart.length > 0) {
+          dispatch({ type: "SET_CART", payload: savedCart });
+        }
+      } else if (event === "SIGNED_OUT") {
         dispatch({ type: "CLEAR_CART" });
         localStorage.removeItem("omh-cart");
-        if (newUserId) {
-          localStorage.setItem("omh-cart-owner", newUserId);
-        } else {
-          localStorage.removeItem("omh-cart-owner");
-        }
+        dispatch({ type: "SET_COUPON", payload: null });
       }
     });
     return () => subscription.unsubscribe();
   }, []);
 
   const totalItems = state.items.reduce((acc: number, item: CartItem) => acc + item.quantity, 0);
-  const subtotal = state.items.reduce((acc: number, item: CartItem) => acc + item.product.price * item.quantity, 0);
+  const subtotal = state.items.reduce((acc: number, item: CartItem) => acc + (item.product?.price || 0) * item.quantity, 0);
 
-  // For now, hardcode the logic for "HAPPY10"
-  const discount = state.couponCode?.toUpperCase() === "HAPPY10" ? Math.round(subtotal * 0.1) : 0;
+  const discount = state.appliedCoupon 
+    ? couponsService.calculateDiscount(state.appliedCoupon, subtotal) 
+    : 0;
 
   return (
     <CartContext.Provider
@@ -172,9 +239,53 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         totalItems,
         subtotal,
         discount,
-        couponCode: state.couponCode,
-        applyCoupon: (code) => dispatch({ type: "APPLY_COUPON", payload: code }),
-        removeCoupon: () => dispatch({ type: "REMOVE_COUPON" }),
+        couponCode: state.appliedCoupon?.code || null,
+        couponError: state.couponError,
+        applyCoupon: async (code) => {
+          const { coupon, error } = await couponsService.validateCoupon(code, subtotal);
+          if (error) {
+            dispatch({ type: "SET_COUPON_ERROR", payload: error });
+          } else if (coupon) {
+            dispatch({ type: "SET_COUPON", payload: coupon });
+          }
+        },
+        removeCoupon: () => dispatch({ type: "SET_COUPON", payload: null }),
+        addCustomItem: (customItem) => {
+          const virtualProduct: Product = {
+            id: `byob-${Date.now()}`,
+            name: "Custom Hamper",
+            slug: `custom-hamper-${Date.now()}`,
+            price: (customItem.box?.price || 0) + customItem.items.reduce((acc: number, i: any) => acc + i.price, 0),
+            images: [customItem.box?.image || ""],
+            category: "custom",
+            occasion: [],
+            description: "Customized gift hamper built via BYOB builder.",
+            shortDescription: "Customized gift hamper",
+            customizable: true,
+            inStock: true,
+            stockQuantity: 1,
+            lowStockThreshold: 0,
+            rating: 5,
+            reviewCount: 0,
+            tags: ["byob"],
+            isBestseller: false,
+            isFeatured: false,
+            isNew: true,
+          };
+          dispatch({ 
+            type: "ADD_CUSTOM_ITEM", 
+            payload: { 
+              product: virtualProduct, 
+              customData: {
+                type: "byob",
+                box: customItem.box,
+                items: customItem.items,
+                message: customItem.message,
+                card: customItem.card,
+              }
+            } 
+          });
+        },
       }}
     >
       {children}

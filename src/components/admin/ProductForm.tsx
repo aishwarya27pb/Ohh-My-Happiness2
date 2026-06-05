@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { productsService } from "@/lib/services/products.service";
 import type { Product, Category } from "@/types";
 import { Loader2, Save, X, Image as ImageIcon, Plus, Trash2, ChevronLeft } from "lucide-react";
 import toast from "react-hot-toast";
@@ -105,10 +104,17 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
     e.preventDefault();
     setLoading(true);
 
-    // Auto-generate slug if missing
-    if (!formData.slug) {
-      formData.slug = formData.name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
-    }
+    // Sanitize slug (strips accidental descriptions/special characters)
+    const cleanSlug = (formData.slug || formData.name)
+      .toLowerCase()
+      .trim()
+      .replace(/ /g, "-")
+      .replace(/[^\w-]+/g, "")
+      .split("-")
+      .slice(0, 8) // Safety: Keep slugs reasonably short
+      .join("-");
+    
+    formData.slug = cleanSlug;
 
     try {
       const { createProductAction, updateProductAction } = await import("@/app/actions/product.actions");
@@ -266,15 +272,23 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
                 Add URL
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-4 mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
               {formData.images.map((img, i) => (
-                <div key={i} className="relative group aspect-square rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
-                  <img src={img} alt={`Product ${i}`} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div key={i} className="relative group aspect-square rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm">
+                  <img src={img} alt={`Product ${i}`} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" />
+                  
+                  {i === 0 && (
+                    <div className="absolute top-2 left-2 bg-[#FF8A00] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10">
+                      Main Image
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <button 
                       type="button"
                       onClick={() => removeImage(img)}
-                      className="bg-white/20 hover:bg-red-500 text-white p-2 rounded-xl transition-all backdrop-blur-sm"
+                      className="bg-red-500 text-white p-2.5 rounded-xl hover:scale-110 transition-all shadow-lg"
+                      title="Remove image"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -282,9 +296,12 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
                 </div>
               ))}
               {formData.images.length === 0 && (
-                <div className="col-span-4 py-8 text-center border-2 border-dashed border-gray-100 rounded-2xl">
-                  <ImageIcon className="mx-auto text-gray-200 mb-2" size={32} />
-                  <p className="text-xs text-gray-400">No images added yet</p>
+                <div className="col-span-full py-12 text-center border-2 border-dashed border-[#FFE4C2] rounded-3xl bg-[#FFF9EE]/30">
+                  <div className="w-16 h-16 bg-[#FFE4C2] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#FFB449]">
+                    <ImageIcon size={32} />
+                  </div>
+                  <h3 className="font-bold text-[#1A1A1A] mb-1">No images yet</h3>
+                  <p className="text-xs text-[#6B6B6B] max-w-[200px] mx-auto">Upload or add image URLs to create a gallery for this product.</p>
                 </div>
               )}
             </div>

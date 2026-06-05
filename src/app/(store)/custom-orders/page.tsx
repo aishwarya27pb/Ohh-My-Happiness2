@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CheckCircle, Upload, Phone, Mail, Building2, Package, MessageSquare } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { createLeadAction } from "@/app/actions/leads.actions";
+import Select from "@/components/ui/Select";
 
 const features = [
   { icon: "🎨", title: "Full Customization", desc: "Your logo, colors, message, and design on every item" },
@@ -186,37 +187,39 @@ export default function CustomOrdersPage() {
                 <h3 className="font-bold text-[#1A1A1A]">Order Details</h3>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Gift Category</label>
-                  <select name="category" value={form.category} onChange={handleChange} className={inputClass("category")}>
-                    <option value="">Select category</option>
-                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Occasion</label>
-                  <select name="occasion" value={form.occasion} onChange={handleChange} className={inputClass("occasion")}>
-                    <option value="">Select occasion</option>
-                    {occasions.map((o) => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
+                <Select
+                  label="Gift Category"
+                  options={categories.map(c => ({ value: c, label: c }))}
+                  value={form.category}
+                  onChange={(val) => setForm(f => ({ ...f, category: val }))}
+                  placeholder="Select category"
+                />
+                <Select
+                  label="Occasion"
+                  options={occasions.map(o => ({ value: o, label: o }))}
+                  value={form.occasion}
+                  onChange={(val) => setForm(f => ({ ...f, occasion: val }))}
+                  placeholder="Select occasion"
+                />
                 <div>
                   <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Quantity *</label>
                   <input name="quantity" type="number" min="10" value={form.quantity} onChange={handleChange} placeholder="e.g. 100" className={inputClass("quantity")} />
                   {errors.quantity && <p className="text-xs text-red-500 mt-1">{errors.quantity}</p>}
                   <p className="text-xs text-[#6B6B6B] mt-1">Minimum 10 units</p>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Budget per Unit</label>
-                  <select name="budget" value={form.budget} onChange={handleChange} className={inputClass("budget")}>
-                    <option value="">Select budget</option>
-                    <option>Under ₹500</option>
-                    <option>₹500 – ₹1,000</option>
-                    <option>₹1,000 – ₹2,500</option>
-                    <option>₹2,500 – ₹5,000</option>
-                    <option>Above ₹5,000</option>
-                  </select>
-                </div>
+                <Select
+                  label="Budget per Unit"
+                  options={[
+                    { value: "Under ₹500", label: "Under ₹500" },
+                    { value: "₹500 – ₹1,000", label: "₹500 – ₹1,000" },
+                    { value: "₹1,000 – ₹2,500", label: "₹1,000 – ₹2,500" },
+                    { value: "₹2,500 – ₹5,000", label: "₹2,500 – ₹5,000" },
+                    { value: "Above ₹5,000", label: "Above ₹5,000" },
+                  ]}
+                  value={form.budget}
+                  onChange={(val) => setForm(f => ({ ...f, budget: val }))}
+                  placeholder="Select budget"
+                />
                 <div>
                   <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Required By</label>
                   <input name="deadline" type="date" value={form.deadline} onChange={handleChange} className={inputClass("deadline")} />

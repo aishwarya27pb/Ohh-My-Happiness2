@@ -13,7 +13,7 @@ npm run start    # Serve production build
 npm run lint     # ESLint check
 ```
 
-No test runner is configured.
+No test runner is configured. E2E specs exist at `tests/e2e/specs/` (Playwright) but are not hooked into CI.
 
 ## Architecture
 
@@ -27,7 +27,20 @@ No test runner is configured.
 
 Both providers are mounted in `src/app/layout.tsx`.
 
-**Data layer**: All product/blog/category data is static in `src/data/products.ts`. No external API or database. Products are identified by `id` (used in cart/wishlist) and `slug` (used in URLs). `id` and `slug` are both the same value in practice.
+**Data layer**: Products live in `src/data/products.ts` (static) AND in Supabase (`products` table via `src/lib/services/products.service.ts`). Products are identified by `id` (cart/wishlist) and `slug` (URLs) — both are the same value in practice. All mutations (orders, leads, cart sync) go through Supabase Server Actions in `src/app/actions/`.
+
+**Supabase integration** (project ID: `siotvawafzrxnchssebk`):
+- `src/lib/supabase/client.ts` — browser client
+- `src/lib/supabase/server.ts` — server/RSC client (cookies-based)
+- `src/lib/supabase/service.ts` — service-role client (admin-only, bypasses RLS)
+- `src/lib/supabase/types.ts` — single source of truth for DB types. After schema changes: `npx supabase gen types typescript --project-id siotvawafzrxnchssebk > src/lib/supabase/types.ts`
+- Tables: `profiles`, `addresses`, `orders`, `order_items`, `leads`, `products`
+
+**Auth**: Supabase Auth with email/password. Roles: `customer` | `admin` (stored in `profiles.role`). Auth Server Actions are in `src/app/actions/auth.actions.ts`. Admin routes (`/admin/**`) are protected. Customer routes (`/account/**`, `/checkout`) redirect to `/auth/login` if unauthenticated. Auth callback at `/auth/callback`.
+
+**Admin panel** (`/admin`): Dashboard, orders list/detail, customers, leads, products. All admin pages are under `src/app/admin/(dashboard)/`. Requires `role = 'admin'` in `profiles`.
+
+**Environment variables**: Validated at startup via `src/env.ts` (zod). Required for dev: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Required for prod only: `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`. Optional: `OPENAI_API_KEY`, `WHATSAPP_API_URL/TOKEN`, analytics IDs, payment keys. Use `import { env } from "@/env"` — never `process.env` directly.
 
 **Styling**: Tailwind CSS v4 with `@theme inline` in `src/app/globals.css`. Brand colors are registered as Tailwind tokens (`bg-golden`, `bg-honey`, `bg-peach`, `bg-cream`, `bg-amber`) — use these, not raw hex values. Global utility classes (`.gradient-sunshine`, `.text-gradient`, `.card-hover`, `.btn-primary`, `.btn-outline`, `.section-padding`) are defined there too.
 
@@ -36,6 +49,10 @@ Both providers are mounted in `src/app/layout.tsx`.
 - Tagline: "Your requirement is our responsibility."
 - Primary: `#FFB449` (golden), Accent: `#FF8A00` (amber), Background: `#FFF9EE` (cream), Dark: `#1A1A1A`
 - Currency: Indian Rupees (₹), phone format: +91
+
+**AI chatbot**: `src/app/api/chat/` — API route using Google Generative AI (`GOOGLE_GENERATIVE_AI_API_KEY`). Knowledge base at `src/lib/chatbot-knowledge.ts`. Chat UI components in `src/components/chat/`.
+
+**BYOB (Build Your Own Box)**: `src/app/(store)/byob/` — custom gift box builder feature.
 
 **Installed but not yet wired**: `framer-motion` (available for animations), `react-hot-toast` (available for notifications).
 

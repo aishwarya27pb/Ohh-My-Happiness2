@@ -26,6 +26,7 @@ export interface Database {
           last_name: string | null;
           email: string | null;
           phone: string | null;
+          cart_data: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -36,6 +37,7 @@ export interface Database {
           last_name?: string | null;
           email?: string | null;
           phone?: string | null;
+          cart_data?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +48,7 @@ export interface Database {
           last_name?: string | null;
           email?: string | null;
           phone?: string | null;
+          cart_data?: Json | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -103,7 +106,8 @@ export interface Database {
             | "shipped"
             | "delivered"
             | "cancelled"
-            | "refunded";
+            | "refunded"
+            | "returned";
           subtotal: number;
           shipping: number;
           discount: number;
@@ -282,6 +286,8 @@ export interface Database {
           is_bestseller: boolean;
           is_featured: boolean;
           is_new: boolean;
+          stock_quantity: number;
+          low_stock_threshold: number;
           created_at: string;
           updated_at: string;
         };
@@ -300,6 +306,8 @@ export interface Database {
           variants?: Json;
           customizable?: boolean;
           in_stock?: boolean;
+          stock_quantity?: number;
+          low_stock_threshold?: number;
           rating?: number;
           review_count?: number;
           tags?: string[];
@@ -323,6 +331,8 @@ export interface Database {
           variants?: Json;
           customizable?: boolean;
           in_stock?: boolean;
+          stock_quantity?: number;
+          low_stock_threshold?: number;
           rating?: number;
           review_count?: number;
           tags?: string[];
@@ -401,7 +411,8 @@ export type OrderStatus =
   | "shipped"
   | "delivered"
   | "cancelled"
-  | "refunded";
+  | "refunded"
+  | "returned";
 
 export type LeadStatus = "new" | "contacted" | "quoted" | "won" | "lost";
 

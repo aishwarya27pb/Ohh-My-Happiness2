@@ -1,0 +1,29 @@
+{
+  "project": "Ohh My Happiness",
+  "budgets": [
+    {
+      "path": "/",
+      "label": "Homepage",
+      "timings": [
+        { "metric": "LCP", "budget": 2500, "description": "Largest Contentful Paint (Goal: < 2.5s)" },
+        { "metric": "TBT", "budget": 200, "description": "Total Blocking Time (Goal: < 200ms)" },
+        { "metric": "CLS", "budget": 0.1, "description": "Cumulative Layout Shift (Goal: < 0.1)" }
+      ],
+      "resourceSizes": [
+        { "resourceType": "script", "budget": 300, "description": "Total JavaScript (Goal: < 300KB Gzip)" },
+        { "resourceType": "image", "budget": 1000, "description": "Total Images (Goal: < 1MB per page)" }
+      ]
+    },
+    {
+      "path": "/store",
+      "label": "Gift Store",
+      "timings": [
+        { "metric": "LCP", "budget": 3000, "description": "Largest Contentful Paint" }
+      ]
+    }
+  ],
+  "monitoring": {
+    "tool": "Lighthouse / PageSpeed Insights",
+    "frequency": "Every Production Build"
+  }
+}

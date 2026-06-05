@@ -196,7 +196,7 @@ function LoginForm() {
               className="text-4xl font-bold text-[#1A1A1A] leading-tight"
               style={{ fontFamily: "var(--font-playfair), serif" }}
             >
-              {otpStep === "verify" ? "Verify Code" : loginMode === "password" ? "Welcome back" : "Easy Login"}
+              {otpStep === "verify" ? "Verify Code" : loginMode === "password" ? "Welcome back" : "Quick Sign-In"}
             </h2>
             <p className="mt-2 text-[#6B6B6B]" style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}>
               {otpStep === "verify" 
@@ -365,7 +365,7 @@ function LoginForm() {
 
           {/* Sign up link */}
           <Link
-            href="/auth/signup"
+            href={`/auth/signup?next=${encodeURIComponent(nextPath)}`}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-[#FF8A00] border-2 border-[#FFE4C2] hover:border-[#FFB449] hover:bg-[#FFF4E0] transition-all duration-300"
           >
             Create an account

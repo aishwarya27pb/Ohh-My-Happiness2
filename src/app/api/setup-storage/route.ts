@@ -1,15 +1,17 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { env } from "@/env";
 
 export async function GET() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
     return NextResponse.json({ error: "Missing Supabase credentials in .env.local" }, { status: 500 });
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
   try {
     console.log("Checking for product-images bucket...");

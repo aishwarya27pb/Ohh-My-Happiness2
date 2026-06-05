@@ -1,10 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { categories, products } from "@/data/products.backup";
+import { env } from "@/env";
 
 export async function GET() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
     return NextResponse.json({ error: "Missing Supabase environment variables" }, { status: 500 });
@@ -12,6 +13,7 @@ export async function GET() {
 
   // Use service role key to bypass RLS
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
   const results = {
     categories: [] as string[],

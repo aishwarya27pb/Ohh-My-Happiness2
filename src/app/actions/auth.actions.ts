@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { updateProfile } from "@/lib/services/customers.service";
 import { redirect } from "next/navigation";
+import { env } from "@/env";
+
 
 // ── Customer sign-up ────────────────────────────────────────────────────────
 
@@ -19,7 +21,7 @@ export async function signUp(formData: {
     email: formData.email,
     password: formData.password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       data: {
         role: "customer",
         first_name: formData.firstName,
@@ -101,7 +103,7 @@ export async function adminSignUp(
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/admin/login`,
+      emailRedirectTo: `${env.NEXT_PUBLIC_SITE_URL}/admin/login`,
       data: {
         role: "admin",
         first_name: firstName,
@@ -138,7 +140,7 @@ export async function getSession() {
 export async function resetPasswordForEmail(email: string) {
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/auth/reset-password`,
+    redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/auth/reset-password`,
   });
   if (error) return { error: error.message };
   return { success: true };

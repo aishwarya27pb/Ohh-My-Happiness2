@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { productsService } from "@/lib/services/products.service";
+import { createClient } from "@/lib/supabase/client";
+import { deleteProductAction } from "@/app/actions/product.actions";
 import type { Product } from "@/types";
 import { Plus, Search, Edit2, Trash2, ExternalLink, Loader2, PackageX, CheckCircle2, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -19,8 +20,9 @@ export default function AdminProductsPage() {
 
   async function loadProducts() {
     setLoading(true);
-    const data = await productsService.getProducts();
-    setProducts(data);
+    const supabase = createClient();
+    const { data } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+    setProducts((data ?? []).map((r: any) => ({ ...r, category: r.category_slug ?? "", inStock: r.in_stock, originalPrice: r.original_price, shortDescription: r.short_description, isBestseller: r.is_bestseller, isFeatured: r.is_featured, isNew: r.is_new, stockQuantity: r.stock_quantity, lowStockThreshold: r.low_stock_threshold, reviewCount: r.review_count })) as Product[]);
     setLoading(false);
   }
 
@@ -28,7 +30,7 @@ export default function AdminProductsPage() {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
 
     setDeletingId(id);
-    const { error } = await productsService.deleteProduct(id);
+    const { error } = await deleteProductAction(id);
     
     if (error) {
       toast.error("Failed to delete product");

@@ -1,3 +1,4 @@
+/** Root Layout - Ohh My Happiness */
 import type { Metadata } from "next";
 import { Geist, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
@@ -57,18 +58,23 @@ export const metadata: Metadata = {
   },
 };
 
+import { ChatWidget } from "@/components/chat/ChatWidget";
+import Analytics from "@/components/Analytics";
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} ${playfair.variable} ${dmSans.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${geist.variable} ${playfair.variable} ${dmSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-[#FFF9EE]">
         <CartProvider>
           <WishlistProvider>
             {children}
             <Toaster position="top-center" />
+            <ChatWidget />
+            <Analytics />
           </WishlistProvider>
         </CartProvider>
       </body>

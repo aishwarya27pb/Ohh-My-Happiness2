@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -15,6 +15,8 @@ const TESTIMONIALS = [
 
 function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") ?? "/";
 
   const [form, setForm] = useState({
     firstName: "",
@@ -177,7 +179,7 @@ function SignupForm() {
                   Check your inbox and verify your account.
                 </p>
                 <button
-                  onClick={() => router.push("/auth/login")}
+                  onClick={() => router.push(`/auth/login?next=${encodeURIComponent(nextPath)}`)}
                   className="inline-flex items-center gap-2 py-3 px-6 rounded-2xl font-semibold text-white transition-all"
                   style={{
                     background: "linear-gradient(135deg, #FFB449 0%, #FF8A00 100%)",
@@ -306,15 +308,13 @@ function SignupForm() {
                           className="w-full px-0 py-2.5 bg-transparent border-0 border-b-2 border-[#FFE4C2] focus:border-[#FFB449] focus:outline-none transition-colors text-[#1A1A1A] placeholder-[#C4C4C4] pr-8"
                           style={{ fontFamily: "var(--font-dm-sans), sans-serif" }}
                         />
-                        {field === "confirmPassword" && (
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword((v) => !v)}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#FF8A00] transition-colors"
-                          >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-0 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#FF8A00] transition-colors"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -356,7 +356,7 @@ function SignupForm() {
                   >
                     Already have an account?{" "}
                     <Link
-                      href="/auth/login"
+                      href={`/auth/login?next=${encodeURIComponent(nextPath)}`}
                       className="font-semibold text-[#FF8A00] hover:text-[#E67A00] transition-colors underline underline-offset-4"
                     >
                       Sign in

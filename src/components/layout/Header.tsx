@@ -11,7 +11,6 @@ import MiniCart from "@/components/cart/MiniCart";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
-import { productsService } from "@/lib/services/products.service";
 import type { Product } from "@/types";
 
 export default function Header() {
@@ -33,8 +32,11 @@ export default function Header() {
 
   useEffect(() => {
     async function loadProducts() {
-      const data = await productsService.getProducts();
-      setProducts(data);
+      const supabase = createClient();
+      const { data } = await supabase.from("products").select("id,name,slug,price,category_slug,tags");
+      if (data) {
+        setProducts(data.map((r: any) => ({ ...r, category: r.category_slug ?? "" })) as Product[]);
+      }
     }
     loadProducts();
   }, []);
@@ -111,10 +113,11 @@ export default function Header() {
 
   const navLinks = [
     { label: "Home", href: "/" },
-    { label: "Corporate Gifting", href: "/corporate-gifting" },
-    { label: "Personal Gifting", href: "/personal-gifting" },
+    { label: "Corporate", href: "/corporate-gifting" },
+    { label: "Personal", href: "/personal-gifting" },
+    { label: "Build Your Box", href: "/byob", isNew: true },
     { label: "Store", href: "/store" },
-    { label: "Custom Orders", href: "/custom-orders" },
+    { label: "Custom", href: "/custom-orders" },
     { label: "About", href: "/about" },
     { label: "Blog", href: "/blog" },
   ];
@@ -129,43 +132,46 @@ export default function Header() {
           scrolled ? "bg-white/95 backdrop-blur shadow-md" : "bg-[#FFF9EE]"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16 lg:h-20 gap-2">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group shrink-0">
               <div className="rounded-xl overflow-hidden shadow-sm ring-1 ring-black/10 group-hover:ring-[#FFB449]/60 transition-all duration-300">
                 <Image
                   src="/logo.jpg"
                   alt="Ohh My Happiness"
-                  width={48}
-                  height={48}
-                  className="w-10 h-10 lg:w-12 lg:h-12 object-cover"
+                  width={80}
+                  height={40}
+                  className="h-9 lg:h-11 w-auto object-contain"
                   priority
                 />
               </div>
               <div className="hidden xl:flex flex-col">
-                <span className="text-base font-black text-[#FF8A00] leading-tight group-hover:text-[#FFB449] transition-colors whitespace-nowrap" style={{ fontFamily: "var(--font-playfair), serif" }}>
+                <span className="text-sm font-black text-[#FF8A00] leading-tight group-hover:text-[#FFB449] transition-colors whitespace-nowrap" style={{ fontFamily: "var(--font-playfair), serif" }}>
                   Ohh My Happiness
-                </span>
-                <span className="text-[10px] text-[#6B6B6B] italic tracking-wide whitespace-nowrap">
-                  Your requirement is our responsibility.
                 </span>
               </div>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-5 ml-4">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+                const isExtra = link.label === "About" || link.label === "Blog";
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`text-[13px] font-semibold transition-colors relative group whitespace-nowrap ${
+                    className={`text-[12px] xl:text-[13px] font-semibold transition-colors relative group whitespace-nowrap flex items-center gap-1 ${
                       isActive ? "text-[#FF8A00]" : "text-[#1A1A1A] hover:text-[#FF8A00]"
-                    }`}
+                    } ${isExtra ? "hidden xl:flex" : "flex"}`}
                   >
                     {link.label}
+                    {link.isNew && (
+                      <span className="text-[8px] bg-[#FF8A00] text-white px-1.5 py-0.5 rounded-full font-black uppercase tracking-tighter animate-pulse">
+                        New
+                      </span>
+                    )}
                     <span className={`absolute -bottom-1 left-0 h-0.5 bg-[#FFB449] transition-all ${
                       isActive ? "w-full" : "w-0 group-hover:w-full"
                     }`} />

@@ -22,25 +22,27 @@ export default function CorporateBanner() {
       <div className="absolute bottom-0 left-0 w-60 h-60 bg-[#FF8A00] opacity-[0.15] rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
           <Reveal direction="left">
           <div>
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#FFB449] mb-4 bg-[#FFB449]/10 px-4 py-1.5 rounded-full">
+            <span className="inline-block text-[10px] font-black uppercase tracking-[0.2em] text-[#FFB449] mb-6 bg-[#FFB449]/10 border border-[#FFB449]/20 px-5 py-2 rounded-full">
               Corporate Gifting Solutions
             </span>
-            <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight mb-4">
+            <h2 className="text-4xl lg:text-5xl font-black text-white leading-[1.1] mb-6">
               Gifting at Scale —{" "}
               <span className="text-[#FFB449]">Done Right</span>
             </h2>
-            <p className="text-white/70 mb-6 leading-relaxed">
+            <p className="text-white/60 mb-8 leading-relaxed text-lg max-w-xl">
               From 10 to 10,000 gifts — we handle bulk corporate orders with precision, quality, and customization that reflects your brand values. Your requirement is our responsibility.
             </p>
 
-            <div className="grid grid-cols-2 gap-3 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-10">
               {features.map((f) => (
-                <div key={f} className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-[#FFB449] shrink-0" />
-                  <span className="text-sm text-white/80">{f}</span>
+                <div key={f} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-[#FFB449]/20 flex items-center justify-center shrink-0">
+                    <CheckCircle size={12} className="text-[#FFB449]" />
+                  </div>
+                  <span className="text-[13px] font-bold text-white/80 tracking-wide">{f}</span>
                 </div>
               ))}
             </div>
@@ -48,13 +50,13 @@ export default function CorporateBanner() {
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
               <Link
                 href="/corporate-gifting"
-                className="bg-[#FFB449] hover:bg-[#FF8A00] text-[#1A1A1A] hover:text-white hover:shadow-[0_6px_20px_rgba(255,138,0,0.35)] font-bold py-4 px-8 rounded-full transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-widest text-[13px] sm:w-auto"
+                className="bg-[#FFB449] hover:bg-[#FFC674] text-[#1A1A1A] font-black py-4 px-10 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-widest text-[11px] shadow-xl shadow-[#FFB449]/10"
               >
                 Explore Corporate Gifting <ArrowRight size={16} />
               </Link>
               <Link
                 href="/custom-orders"
-                className="btn-outline border-white/30 text-white hover:bg-white hover:text-[#1A1A1A] text-center"
+                className="bg-transparent border-2 border-[#FFB449]/30 hover:border-[#FFB449] text-white font-black py-4 px-10 rounded-2xl transition-all duration-300 flex items-center justify-center uppercase tracking-widest text-[11px]"
               >
                 Request Bulk Quote
               </Link>
@@ -63,7 +65,7 @@ export default function CorporateBanner() {
           </Reveal>
 
           {/* Stats grid */}
-          <StaggerReveal className="grid grid-cols-2 gap-4" staggerDelay={0.1} delay={0.1}>
+          <StaggerReveal className="grid grid-cols-2 gap-5" staggerDelay={0.1} delay={0.1}>
             {[
               { icon: "🏆", value: "500+", label: "Corporate Partners" },
               { icon: "📦", value: "1L+", label: "Gifts Delivered" },
@@ -73,11 +75,11 @@ export default function CorporateBanner() {
               <motion.div
                 key={label}
                 variants={staggerItem}
-                className="bg-white/5 border border-white/10 rounded-3xl p-6 text-center hover:bg-white/10 transition-all duration-300 backdrop-blur-md group hover:-translate-y-1 cursor-pointer"
+                className="bg-white/[0.03] border border-white/10 rounded-[32px] p-8 text-center hover:bg-white/[0.08] transition-all duration-500 backdrop-blur-xl group hover:-translate-y-2 cursor-default"
               >
-                <div className="text-4xl mb-2">{icon}</div>
-                <p className="text-2xl font-black text-[#FFB449]">{value}</p>
-                <p className="text-xs text-white/60 mt-1">{label}</p>
+                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-500">{icon}</div>
+                <p className="text-3xl font-black text-[#FFB449] tracking-tight">{value}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mt-2">{label}</p>
               </motion.div>
             ))}
           </StaggerReveal>

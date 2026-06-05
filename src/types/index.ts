@@ -12,6 +12,8 @@ export interface Product {
   variants?: Variant[];
   customizable: boolean;
   inStock: boolean;
+  stockQuantity: number;
+  lowStockThreshold: number;
   rating: number;
   reviewCount: number;
   tags: string[];
@@ -29,9 +31,17 @@ export interface Variant {
 }
 
 export interface CartItem {
+  id: string; // Unique identifier for this cart item (e.g. product_id + variants_hash)
   product: Product;
   quantity: number;
   selectedVariants?: Record<string, string>;
+  customData?: {
+    type: "byob";
+    box: any;
+    items: any[];
+    message?: string;
+    card?: string;
+  };
 }
 
 export interface WishlistItem {

@@ -46,9 +46,13 @@ export default function CartPage() {
         {/* Items */}
         <div className="lg:col-span-2 space-y-4">
           {state.items.map((item) => (
-            <div key={item.product.id} className="bg-white rounded-3xl p-5 border border-[#FFE4C2] flex gap-4">
+            <div key={item.id} className="bg-white rounded-3xl p-5 border border-[#FFE4C2] flex gap-4">
               <div className="w-24 h-24 bg-[#FFE4C2] rounded-2xl flex items-center justify-center text-4xl shrink-0">
-                🎁
+                {item.product.images?.[0] ? (
+                  <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover rounded-xl" />
+                ) : (
+                  <span>🎁</span>
+                )}
               </div>
 
               <div className="flex-1 min-w-0">
@@ -58,12 +62,21 @@ export default function CartPage() {
                       {item.product.name}
                     </Link>
                     <p className="text-xs text-[#6B6B6B] mt-0.5 capitalize">{item.product.category.replace(/-/g, " ")}</p>
+                    {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {Object.entries(item.selectedVariants).map(([k, v]) => (
+                          <span key={k} className="text-[10px] text-[#6B6B6B] bg-gray-50 px-1.5 py-0.5 rounded-md uppercase font-bold">
+                            {k}: {v}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     {item.product.customizable && (
                       <p className="text-xs text-[#FF8A00] font-medium mt-1">✨ Customizable</p>
                     )}
                   </div>
                   <button
-                    onClick={() => removeItem(item.product.id)}
+                    onClick={() => removeItem(item.id)}
                     className="p-2 hover:bg-red-50 rounded-full text-[#6B6B6B] hover:text-red-500 transition-colors shrink-0"
                   >
                     <Trash2 size={16} />
@@ -72,11 +85,11 @@ export default function CartPage() {
 
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-2 bg-[#FFF9EE] rounded-full px-3 py-1.5 border border-[#FFE4C2]">
-                    <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="hover:text-[#FF8A00]">
+                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="hover:text-[#FF8A00]">
                       <Minus size={14} />
                     </button>
                     <span className="text-sm font-bold w-5 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="hover:text-[#FF8A00]">
+                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="hover:text-[#FF8A00]">
                       <Plus size={14} />
                     </button>
                   </div>

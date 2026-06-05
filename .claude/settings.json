@@ -10,7 +10,10 @@
       "Bash(xargs -I {} bash -c 'echo \"=== {} ===\" && head -3 {}')",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Read(//Users/aishwaryabadiger/**)"
+      "Read(//Users/aishwaryabadiger/**)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://siotvawafzrxnchssebk.supabase.co/rest/v1/\")",
+      "Bash(curl -v \"https://siotvawafzrxnchssebk.supabase.co\")"
     ],
     "additionalDirectories": [
       "/Users/aishwaryabadiger/.claude",

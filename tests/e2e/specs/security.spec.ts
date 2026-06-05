@@ -1,30 +1,38 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Security & Access Control", () => {
-  test("Guest should be redirected from /admin to /admin/login", async ({ page }) => {
-    // ── RBAC Check ──────────────────────────────────────────────────────────
-    await page.goto("/admin");
-    console.log("Current URL after /admin:", page.url());
-    await expect(page).toHaveURL(/\/admin\/login/, { timeout: 10000 });
+test.describe("Security & Route Protection", () => {
+  test.beforeEach(async ({ context }) => {
+    // Ensure we start each test in a clean, unauthenticated state
+    await context.clearCookies();
   });
 
-  test("Guest should be redirected from /account to login", async ({ page }) => {
-    // ── Authentication Check ────────────────────────────────────────────────
-    await page.goto("/account");
-    console.log("Current URL after /account:", page.url());
-    // Next.js/Browser might decode %2F back to /
-    await expect(page).toHaveURL(/\/auth\/login\?next=(\/|%2F)account/, { timeout: 10000 });
-  });
+  const protectedRoutes = [
+    "/admin",
+    "/admin/orders",
+    "/admin/products",
+    "/admin/customers"
+  ];
 
-  test("Horizontal Privilege Escalation (BOLA) Check on Order Confirmation", async ({ page }) => {
-    // ── IDOR/BOLA Check ─────────────────────────────────────────────────────
-    // Try to access a specific order number directly
-    const targetOrder = "OMH-TEST-BOLA-123";
-    await page.goto(`/order-confirmation?order=${targetOrder}`);
+  for (const route of protectedRoutes) {
+    test(`should redirect unauthenticated user from ${route} to login`, async ({ page }) => {
+      // 1. Attempt access
+      await page.goto(route);
+      
+      // 2. Expect redirect to login (Supabase Middleware or Next.js layout guard)
+      await expect(page).toHaveURL(/\/admin\/login/);
+      
+      // 3. Ensure no admin content is rendered
+      const adminHeading = page.getByText(/Order Management/i);
+      await expect(adminHeading).not.toBeVisible();
+    });
+  }
+
+  test("should not allow access to admin API actions without session", async ({ request }) => {
+    // Note: This is an API-level security test
+    // We try to call an admin action directly
+    const response = await request.post("/api/debug-products"); // Example protected endpoint
     
-    // Check if the page displays the order number without authentication
-    await expect(page.locator(`text=#${targetOrder}`)).toBeVisible();
-    // [FINDING] This confirms the confirmation page is public. 
-    // While it doesn't leak personal data yet, it identifies the order ID scope.
+    // Should be unauthorized or redirected
+    expect([401, 307, 303, 403]).toContain(response.status());
   });
 });

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updatePassword, getSession } from "@/app/actions/auth.actions";
-import { Lock, Loader2, CheckCircle2, ShieldCheck, X } from "lucide-react";
+import { Lock, Loader2, CheckCircle2, ShieldCheck, X, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function ResetPasswordPage() {
@@ -14,6 +14,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [checking, setChecking] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -135,15 +136,21 @@ export default function ResetPasswordPage() {
                 New Password
               </label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B] group-focus-within:text-[#FF8A00] transition-colors" size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-4 bg-[#FFF9EE] border-2 border-transparent rounded-2xl focus:border-[#FFB449] focus:bg-white outline-none transition-all text-sm font-medium"
+                  className="w-full px-4 py-4 bg-[#FFF9EE] border-2 border-transparent rounded-2xl focus:border-[#FFB449] focus:bg-white outline-none transition-all text-sm font-medium pr-12"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#FF8A00] transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
@@ -152,15 +159,21 @@ export default function ResetPasswordPage() {
                 Confirm New Password
               </label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6B6B6B] group-focus-within:text-[#FF8A00] transition-colors" size={18} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-4 bg-[#FFF9EE] border-2 border-transparent rounded-2xl focus:border-[#FFB449] focus:bg-white outline-none transition-all text-sm font-medium"
+                  className="w-full px-4 py-4 bg-[#FFF9EE] border-2 border-transparent rounded-2xl focus:border-[#FFB449] focus:bg-white outline-none transition-all text-sm font-medium pr-12"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#FF8A00] transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

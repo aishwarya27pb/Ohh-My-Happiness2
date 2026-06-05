@@ -1,11 +1,34 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
+import { useRouter, usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 import Link from "next/link";
 import { X, ShoppingBag, Plus, Minus, Trash2 } from "lucide-react";
 
 export default function MiniCart() {
   const { state, closeCart, updateQuantity, removeItem, subtotal } = useCart();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleCheckout = async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      toast.error("Please sign in to proceed to checkout", {
+        icon: "🔒",
+        duration: 4000,
+      });
+      closeCart();
+      router.push(`/auth/signup?next=/checkout`);
+      return;
+    }
+
+    closeCart();
+    router.push("/checkout");
+  };
 
   return (
     <>
@@ -50,37 +73,55 @@ export default function MiniCart() {
             </div>
           ) : (
             state.items.map((item) => (
-              <div key={item.product.id} className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm">
-                {/* Image placeholder */}
-                <div className="w-16 h-16 bg-[#FFE4C2] rounded-xl flex items-center justify-center shrink-0 text-2xl">
-                  🎁
+              <div key={item.id} className="flex gap-3 bg-white rounded-2xl p-3 shadow-sm border border-transparent hover:border-[#FFE4C2] transition-colors">
+                {/* Image */}
+                <div className="w-20 h-20 bg-[#FFF9EE] rounded-xl overflow-hidden shrink-0 border border-[#FFE4C2]/30">
+                  {item.product.images?.[0] ? (
+                    <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl">🎁</div>
+                  )}
                 </div>
+
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-[#1A1A1A] leading-tight mb-1 truncate">
+                  <p className="font-bold text-sm text-[#1A1A1A] leading-tight mb-1 truncate">
                     {item.product.name}
                   </p>
-                  <p className="text-[#FF8A00] font-bold text-sm">
+                  
+                  {item.selectedVariants && Object.keys(item.selectedVariants).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-1">
+                      {Object.entries(item.selectedVariants).map(([k, v]) => (
+                        <span key={k} className="text-[10px] text-[#6B6B6B] bg-gray-50 px-1.5 py-0.5 rounded-md uppercase font-bold">
+                          {k}: {v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <p className="text-[#FF8A00] font-black text-sm">
                     ₹{(item.product.price * item.quantity).toLocaleString()}
                   </p>
+                  
                   <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1 bg-[#FFF9EE] rounded-full border border-[#FFE4C2]">
+                    <div className="flex items-center gap-1 bg-[#FFF9EE] rounded-full border border-[#FFE4C2] p-0.5">
                       <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        className="p-1 hover:bg-[#FFE4C2] rounded-full transition-colors"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-6 h-6 flex items-center justify-center hover:bg-[#FFE4C2] rounded-full transition-colors"
                       >
-                        <Minus size={12} />
+                        <Minus size={10} />
                       </button>
-                      <span className="text-xs font-bold w-5 text-center">{item.quantity}</span>
+                      <span className="text-xs font-black w-6 text-center">{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        className="p-1 hover:bg-[#FFE4C2] rounded-full transition-colors"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="w-6 h-6 flex items-center justify-center hover:bg-[#FFE4C2] rounded-full transition-colors"
                       >
-                        <Plus size={12} />
+                        <Plus size={10} />
                       </button>
                     </div>
                     <button
-                      onClick={() => removeItem(item.product.id)}
+                      onClick={() => removeItem(item.id)}
                       className="p-1.5 hover:bg-red-50 rounded-full text-[#6B6B6B] hover:text-red-500 transition-colors"
+                      title="Remove from cart"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -99,13 +140,12 @@ export default function MiniCart() {
               <span className="font-black text-lg text-[#1A1A1A]">₹{subtotal.toLocaleString()}</span>
             </div>
             <p className="text-xs text-[#6B6B6B] text-center">Shipping & taxes calculated at checkout</p>
-            <Link
-              href="/checkout"
-              onClick={closeCart}
+            <button
+              onClick={handleCheckout}
               className="btn-primary w-full text-center block text-sm"
             >
               Proceed to Checkout
-            </Link>
+            </button>
             <Link
               href="/cart"
               onClick={closeCart}

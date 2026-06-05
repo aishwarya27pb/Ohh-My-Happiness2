@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
 
@@ -59,9 +60,12 @@ export default function Hero() {
               
               {/* Center Gift 3D */}
               <div className="relative z-10 hover:scale-110 transition-transform duration-500 cursor-default">
-                <img 
+                <Image 
                   src="https://em-content.zobj.net/source/apple/354/wrapped-gift_1f381.png" 
                   alt="Gift" 
+                  width={224}
+                  height={224}
+                  priority
                   className="w-56 h-56 object-contain drop-shadow-2xl"
                 />
               </div>
@@ -71,9 +75,11 @@ export default function Hero() {
               {/* Top Left - Corporate */}
               <div className="absolute top-8 -left-8 bg-white rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-white w-[250px] z-20 animate-float-slow">
                 <div className="flex flex-col gap-2">
-                  <img 
+                  <Image 
                     src="https://em-content.zobj.net/source/apple/354/trophy_1f3c6.png" 
                     alt="Trophy" 
+                    width={40}
+                    height={40}
                     className="w-10 h-10 object-contain drop-shadow-sm mb-1"
                   />
                   <div>
@@ -92,9 +98,11 @@ export default function Hero() {
               {/* Bottom Right - Customized */}
               <div className="absolute bottom-8 right-0 bg-white rounded-3xl p-6 border border-white shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-[240px] z-20 animate-float-slow" style={{ animationDelay: '1s' }}>
                 <div className="flex flex-col gap-2">
-                  <img 
+                  <Image 
                     src="https://em-content.zobj.net/source/apple/354/sparkles_2728.png" 
                     alt="Sparkles" 
+                    width={36}
+                    height={36}
                     className="w-9 h-9 object-contain drop-shadow-sm mb-1"
                   />
                   <div>
@@ -106,10 +114,10 @@ export default function Hero() {
 
               {/* Floating Icons */}
               <div className="absolute -top-6 right-16 z-10 animate-pulse transition-transform hover:scale-110">
-                <img src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="Star" className="w-14 h-14 object-contain drop-shadow-lg" />
+                <Image src="https://em-content.zobj.net/source/apple/354/star_2b50.png" alt="Star" width={56} height={56} className="w-14 h-14 object-contain drop-shadow-lg" />
               </div>
               <div className="absolute -bottom-2 left-6 z-10 animate-bounce-subtle transition-transform hover:scale-110">
-                <img src="https://em-content.zobj.net/source/apple/354/yellow-heart_1f49b.png" alt="Heart" className="w-10 h-10 object-contain drop-shadow-md opacity-90" />
+                <Image src="https://em-content.zobj.net/source/apple/354/yellow-heart_1f49b.png" alt="Heart" width={40} height={40} className="w-10 h-10 object-contain drop-shadow-md opacity-90" />
               </div>
             </div>
           </div>

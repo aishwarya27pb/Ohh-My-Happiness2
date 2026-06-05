@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { Filter, X, SlidersHorizontal, Loader2 } from "lucide-react";
-import { productsService } from "@/lib/services/products.service";
 import type { Product, Category } from "@/types";
 import { useSearchParams } from "next/navigation";
 

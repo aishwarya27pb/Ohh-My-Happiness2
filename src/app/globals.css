@@ -29,7 +29,7 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* scroll-behavior: smooth; - Removed to fix Next.js navigation lag */
 }
 
 body {

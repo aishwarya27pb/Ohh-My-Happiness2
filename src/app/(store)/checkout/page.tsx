@@ -5,6 +5,12 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { Check, CreditCard, MapPin, User } from "lucide-react";
 import { createOrderAction } from "@/app/actions/orders.actions";
+import Select from "@/components/ui/Select";
+
+const states = [
+  "Maharashtra", "Delhi", "Karnataka", "Tamil Nadu", 
+  "Gujarat", "Rajasthan", "West Bengal", "Telangana"
+].map(s => ({ value: s, label: s }));
 
 const steps = ["Delivery", "Payment", "Review"];
 
@@ -155,15 +161,14 @@ export default function CheckoutPage() {
                       {errors.pincode && <p className="text-xs text-red-500 mt-1">{errors.pincode}</p>}
                     </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">State</label>
-                    <select name="state" value={form.state} onChange={handleChange} className={inputClass("state")}>
-                      <option value="">Select state</option>
-                      {["Maharashtra", "Delhi", "Karnataka", "Tamil Nadu", "Gujarat", "Rajasthan", "West Bengal", "Telangana"].map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="State"
+                    options={states}
+                    value={form.state}
+                    onChange={(val) => setForm(f => ({ ...f, state: val }))}
+                    placeholder="Select state"
+                    error={errors.state}
+                  />
                 </div>
               </div>
 

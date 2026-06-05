@@ -1,21 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useRouter, usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
 import type { Product } from "@/types";
-import { Heart, ShoppingCart, Star, Truck, Shield, RefreshCw, Check, Share2 } from "lucide-react";
+import { 
+  Heart, 
+  ShoppingCart, 
+  Star, 
+  Truck, 
+  Shield, 
+  RefreshCw, 
+  Check, 
+  Share2,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [added, setAdded] = useState(false);
-  const [mainImage, setMainImage] = useState(product.images?.[0] || "");
+  const [shared, setShared] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   const { addItem } = useCart();
   const { toggle, isWishlisted } = useWishlist();
-  const wishlisted = isWishlisted(product.id);
+
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const wishlisted = mounted ? isWishlisted(product.id) : false;
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/store/${product.slug}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
+
+  const images = product.images && product.images.length > 0 ? product.images : ["/placeholder.jpg"];
+  const mainImage = images[activeIndex];
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    if (newDirection === 1) {
+      setActiveIndex((prev) => (prev + 1) % images.length);
+    } else {
+      setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 300 : -300,
+      opacity: 0
+    })
+  };
 
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -28,7 +95,19 @@ export default function ProductDetailClient({ product }: { product: Product }) {
     return acc;
   }, {}) ?? {};
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      toast.error("Please sign in to add items to your cart", {
+        icon: "🔒",
+        duration: 4000,
+      });
+      router.push(`/auth/signup?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+
     addItem(product, qty, selectedVariants);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -52,34 +131,67 @@ export default function ProductDetailClient({ product }: { product: Product }) {
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         {/* Image */}
         <div className="space-y-4">
-          <div className="aspect-square bg-white rounded-3xl flex items-center justify-center relative overflow-hidden border border-[#FFE4C2]/50 shadow-sm">
-            {mainImage ? (
-              <img src={mainImage} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-            ) : (
-              <span className="text-[120px]">🎁</span>
-            )}
+          <div className="aspect-square bg-white rounded-3xl flex items-center justify-center relative overflow-hidden border border-[#FFE4C2]/50 shadow-sm group">
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.img
+                key={activeIndex}
+                src={mainImage}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.2 }
+                }}
+                alt={product.name}
+                className="absolute w-full h-full object-cover"
+              />
+            </AnimatePresence>
             
+            {/* Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={() => paginate(-1)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#1A1A1A] shadow-md hover:bg-white transition-all z-10 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={() => paginate(1)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md flex items-center justify-center text-[#1A1A1A] shadow-md hover:bg-white transition-all z-10 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+
             {product.isBestseller && (
-              <span className="absolute top-4 left-4 bg-[#FFB449] text-[#1A1A1A] text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+              <span className="absolute top-4 left-4 bg-[#FFB449] text-[#1A1A1A] text-xs font-bold px-3 py-1 rounded-full shadow-sm z-10">
                 Bestseller
               </span>
             )}
             {product.isNew && (
-              <span className="absolute top-4 right-4 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
+              <span className="absolute top-4 right-4 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full z-10">
                 New Arrival
               </span>
             )}
           </div>
 
           {/* Thumbnail row */}
-          {product.images && product.images.length > 1 && (
+          {images.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {product.images.map((img, i) => (
+              {images.map((img, i) => (
                 <div 
                   key={i} 
-                  onClick={() => setMainImage(img)}
+                  onClick={() => {
+                    setDirection(i > activeIndex ? 1 : -1);
+                    setActiveIndex(i);
+                  }}
                   className={`flex-shrink-0 w-20 h-20 rounded-2xl overflow-hidden cursor-pointer border-2 transition-all ${
-                    mainImage === img ? "border-[#FFB449] scale-95" : "border-transparent hover:border-[#FFE4C2]"
+                    activeIndex === i ? "border-[#FFB449] scale-95" : "border-transparent hover:border-[#FFE4C2]"
                   }`}
                 >
                   <img src={img} alt={`${product.name} ${i}`} className="w-full h-full object-cover" />
@@ -162,32 +274,66 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 mb-6">
-            <button
+          <div className="flex gap-3 mb-8">
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(255, 138, 0, 0.2)" }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleAddToCart}
-              className={`flex-1 py-4 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+              className={`flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                 added
-                  ? "bg-green-500 text-white"
-                  : "bg-[#FFB449] text-[#1A1A1A] hover:bg-[#FF8A00] hover:text-white hover:shadow-lg"
+                  ? "bg-green-500 text-white shadow-lg"
+                  : "bg-[#FFB449] text-[#1A1A1A] hover:bg-[#FF8A00] hover:text-white shadow-md"
               }`}
             >
               {added ? <><Check size={18} /> Added!</> : <><ShoppingCart size={18} /> Add to Cart</>}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1, backgroundColor: "#FFE4C2" }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => toggle(product)}
-              className="w-14 h-14 rounded-full border-2 border-[#FFE4C2] flex items-center justify-center hover:border-[#FFB449] hover:bg-[#FFE4C2] transition-all"
+              className="w-14 h-14 rounded-2xl border-2 border-[#FFE4C2] flex items-center justify-center transition-all bg-white shadow-sm"
             >
               <Heart size={20} className={wishlisted ? "fill-red-500 text-red-500" : "text-[#6B6B6B]"} />
-            </button>
+            </motion.button>
 
-            <button className="w-14 h-14 rounded-full border-2 border-[#FFE4C2] flex items-center justify-center hover:border-[#FFB449] hover:bg-[#FFE4C2] transition-all">
-              <Share2 size={18} className="text-[#6B6B6B]" />
-            </button>
+            <motion.button 
+              whileHover={{ scale: 1.1, backgroundColor: "#FFE4C2" }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleShare}
+              className={`w-14 h-14 rounded-2xl border-2 border-[#FFE4C2] flex items-center justify-center transition-all bg-white shadow-sm ${shared ? "bg-green-50 border-green-200" : ""}`}
+              title="Share product"
+            >
+              <AnimatePresence mode="wait">
+                {shared ? (
+                  <motion.div
+                    key="check"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="text-green-600"
+                  >
+                    <Check size={20} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="share"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                  >
+                    <Share2 size={18} className="text-[#6B6B6B]" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
 
           {product.customizable && (
-            <div className="bg-[#FFE4C2] rounded-2xl p-4 mb-6 flex items-center gap-3">
+            <motion.div 
+              whileHover={{ scale: 1.01 }}
+              className="bg-[#FFE4C2] rounded-2xl p-4 mb-8 flex items-center gap-4 border border-[#FFB449]/20"
+            >
               <span className="text-2xl">✨</span>
               <div>
                 <p className="font-bold text-sm text-[#1A1A1A]">This gift is customizable</p>
@@ -196,21 +342,25 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                   Request customization →
                 </Link>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Features */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[#FFE4C2]">
+          <div className="grid grid-cols-3 gap-3 pt-6 border-t border-[#FFE4C2]">
             {[
-              { icon: <Truck size={16} />, label: "Free Delivery", sub: "Above ₹999" },
-              { icon: <Shield size={16} />, label: "100% Secure", sub: "Safe packaging" },
-              { icon: <RefreshCw size={16} />, label: "Easy Returns", sub: "7-day policy" },
+              { icon: <Truck size={18} />, label: "Free Delivery", sub: "Above ₹999" },
+              { icon: <Shield size={18} />, label: "100% Secure", sub: "Safe packaging" },
+              { icon: <RefreshCw size={18} />, label: "Easy Returns", sub: "7-day policy" },
             ].map((f) => (
-              <div key={f.label} className="text-center">
-                <div className="flex justify-center text-[#FFB449] mb-1">{f.icon}</div>
-                <p className="text-xs font-bold text-[#1A1A1A]">{f.label}</p>
-                <p className="text-xs text-[#6B6B6B]">{f.sub}</p>
-              </div>
+              <motion.div 
+                key={f.label} 
+                whileHover={{ y: -5 }}
+                className="text-center p-3 rounded-2xl transition-colors hover:bg-white/50"
+              >
+                <div className="flex justify-center text-[#FFB449] mb-2">{f.icon}</div>
+                <p className="text-[11px] font-bold text-[#1A1A1A] leading-tight mb-0.5">{f.label}</p>
+                <p className="text-[10px] text-[#6B6B6B]">{f.sub}</p>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -218,3 +368,4 @@ export default function ProductDetailClient({ product }: { product: Product }) {
     </div>
   );
 }
+

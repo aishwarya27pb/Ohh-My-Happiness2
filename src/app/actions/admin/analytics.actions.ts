@@ -8,23 +8,12 @@ export interface DashboardMetrics {
   monthRevenue: number;
   monthOrders: number;
   newCustomers: number;
-  openLeads: number;
   recentOrders: Array<{
     id: string;
     order_number: string;
     contact_name: string;
     contact_email: string;
     total: number;
-    status: string;
-    created_at: string;
-  }>;
-  recentLeads: Array<{
-    id: string;
-    name: string;
-    company: string | null;
-    email: string;
-    category: string | null;
-    occasion: string | null;
     status: string;
     created_at: string;
   }>;
@@ -43,9 +32,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     { data: allOrders },
     { data: monthOrders },
     { data: monthCustomers },
-    { data: openLeads },
     { data: recentOrders },
-    { data: recentLeads },
   ] = (await Promise.all([
     supabase.from("orders").select("total").neq("status", "cancelled"),
     supabase
@@ -59,26 +46,15 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       .eq("role", "customer")
       .gte("created_at", monthStart),
     supabase
-      .from("custom_order_requests")
-      .select("id")
-      .in("status", ["new", "contacted"]),
-    supabase
       .from("orders")
       .select("id, order_number, contact_name, contact_email, total, status, created_at")
       .order("created_at", { ascending: false })
       .limit(10),
-    supabase
-      .from("custom_order_requests")
-      .select("id, name, company, email, category, occasion, status, created_at")
-      .order("created_at", { ascending: false })
-      .limit(5),
   ])) as [
     { data: OrderTotalRow[] | null; error: unknown },
     { data: OrderTotalRow[] | null; error: unknown },
     { data: IdRow[] | null; error: unknown },
-    { data: IdRow[] | null; error: unknown },
     { data: DashboardMetrics["recentOrders"] | null; error: unknown },
-    { data: DashboardMetrics["recentLeads"] | null; error: unknown },
   ];
 
   // Revenue by month (last 6 months)
@@ -106,9 +82,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     monthRevenue: (monthOrders ?? []).reduce((s, o) => s + (o.total ?? 0), 0),
     monthOrders: (monthOrders ?? []).length,
     newCustomers: (monthCustomers ?? []).length,
-    openLeads: (openLeads ?? []).length,
     recentOrders: (recentOrders ?? []) as DashboardMetrics["recentOrders"],
-    recentLeads: (recentLeads ?? []) as DashboardMetrics["recentLeads"],
     revenueByMonth,
   };
 }

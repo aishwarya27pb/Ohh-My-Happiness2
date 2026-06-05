@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { productsService } from "@/lib/services/products.service";
+import { productsService, getProductSlugsForStaticParams } from "@/lib/services/products.service";
 import ProductDetailClient from "./ProductDetailClient";
 import ProductCard from "@/components/ui/ProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { env } from "@/env";
 
 export async function generateStaticParams() {
-  const products = await productsService.getProducts();
-  return products.map((p) => ({ id: p.slug }));
+  return getProductSlugsForStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

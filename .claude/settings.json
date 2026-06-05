@@ -16,7 +16,8 @@
       "Bash(curl -v \"https://siotvawafzrxnchssebk.supabase.co\")",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "/Users/aishwaryabadiger/.claude",

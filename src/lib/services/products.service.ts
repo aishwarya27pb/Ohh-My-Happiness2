@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { Product, Category } from "@/types";
 import type { ProductRow, CategoryRow } from "@/lib/supabase/types";
 
@@ -38,6 +39,13 @@ function mapCategory(row: CategoryRow): Category {
     productCount: row.product_count,
     icon: row.icon ?? undefined,
   };
+}
+
+// Safe for generateStaticParams — uses service client, no cookies()
+export async function getProductSlugsForStaticParams(): Promise<{ id: string }[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase.from("products").select("slug");
+  return (data ?? []).map((r) => ({ id: r.slug }));
 }
 
 export const productsService = {

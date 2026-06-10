@@ -101,6 +101,7 @@ export default async function AdminOrdersPage() {
           <h3 className="font-black text-[#1A1A1A] text-sm uppercase tracking-widest">Recent Transactions</h3>
           <span className="text-[10px] font-bold text-[#6B6B6B] bg-[#F0F0F0] px-2 py-1 rounded-lg">LIVE UPDATES</span>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#FAFAFA] border-b border-[#F0F0F0] text-[10px] text-[#6B6B6B] uppercase font-black tracking-widest">
@@ -155,6 +156,7 @@ export default async function AdminOrdersPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

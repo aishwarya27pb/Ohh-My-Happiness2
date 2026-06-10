@@ -22,6 +22,7 @@ export default async function AdminCustomersPage() {
             <p className="text-sm text-[#6B6B6B] mt-1">Customers appear here after they sign up.</p>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#F0F0F0] text-xs text-[#6B6B6B] uppercase tracking-widest">
@@ -58,6 +59,7 @@ export default async function AdminCustomersPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

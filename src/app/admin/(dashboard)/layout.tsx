@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/app/actions/auth.actions";
-import { LayoutDashboard, ShoppingBag, Users, MessageSquare, LogOut, Shield, Gift } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Users, MessageSquare, LogOut, Shield, Gift, Menu, X } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -14,13 +15,43 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex">
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-40 h-14 bg-[#1A1A1A] flex items-center justify-between px-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-[#FFB449] flex items-center justify-center shadow-lg shadow-[#FFB449]/20">
+            <Shield size={14} className="text-white" />
+          </div>
+          <p className="text-white font-black text-sm leading-tight">OMH Admin</p>
+        </div>
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="p-2 -mr-2 text-white/70 hover:text-white"
+          aria-label="Open menu"
+        >
+          <Menu size={22} />
+        </button>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {menuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/40"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 bg-[#1A1A1A] flex flex-col fixed inset-y-0 left-0 z-50">
+      <aside
+        className={`w-60 bg-[#1A1A1A] flex flex-col fixed inset-y-0 left-0 z-50 transition-transform duration-300 lg:translate-x-0 ${
+          menuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         {/* Brand */}
-        <div className="p-5 border-b border-white/10">
+        <div className="p-5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-[#FFB449] flex items-center justify-center shadow-lg shadow-[#FFB449]/20">
               <Shield size={16} className="text-white" />
@@ -30,6 +61,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-white/30 text-xs tracking-tight">CRM Dashboard</p>
             </div>
           </div>
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="lg:hidden p-1 text-white/50 hover:text-white"
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Nav */}
@@ -40,9 +78,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={href}
                 href={href}
+                onClick={() => setMenuOpen(false)}
                 className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all group ${
-                  isActive 
-                    ? "bg-white text-[#1A1A1A] shadow-lg shadow-white/5 translate-x-1" 
+                  isActive
+                    ? "bg-white text-[#1A1A1A] shadow-lg shadow-white/5 translate-x-1"
                     : "text-white/50 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -69,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 ml-60 min-h-screen">
+      <main className="flex-1 lg:ml-60 min-h-screen pt-14 lg:pt-0">
         {children}
       </main>
     </div>

@@ -78,6 +78,7 @@ export default async function AdminCustomerDetailPage({
             {orders.length === 0 ? (
               <p className="px-5 py-10 text-center text-sm text-[#6B6B6B]">No orders placed yet.</p>
             ) : (
+              <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#F0F0F0] text-xs text-[#6B6B6B] uppercase tracking-widest">
@@ -110,6 +111,7 @@ export default async function AdminCustomerDetailPage({
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </div>

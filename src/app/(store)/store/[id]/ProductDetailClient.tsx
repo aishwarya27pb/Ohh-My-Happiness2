@@ -225,7 +225,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           {/* Price */}
           <div className="flex items-center gap-3 mb-6">
             <span className="text-3xl font-black text-[#1A1A1A]">₹{product.price.toLocaleString()}</span>
-            {product.originalPrice && (
+            {!!product.originalPrice && (
               <>
                 <span className="text-lg text-[#6B6B6B] line-through">₹{product.originalPrice.toLocaleString()}</span>
                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">

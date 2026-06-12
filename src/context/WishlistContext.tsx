@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useState } from "react";
 import type { Product } from "@/types";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +11,7 @@ interface WishlistState {
 type WishlistAction =
   | { type: "ADD"; payload: Product }
   | { type: "REMOVE"; payload: string }
+  | { type: "SET"; payload: Product[] }
   | { type: "CLEAR" };
 
 function wishlistReducer(state: WishlistState, action: WishlistAction): WishlistState {
@@ -20,6 +21,8 @@ function wishlistReducer(state: WishlistState, action: WishlistAction): Wishlist
       return { items: [...state.items, action.payload] };
     case "REMOVE":
       return { items: state.items.filter((i) => i.id !== action.payload) };
+    case "SET":
+      return { items: action.payload };
     case "CLEAR":
       return { items: [] };
     default:
@@ -40,24 +43,27 @@ interface WishlistContextValue {
 const WishlistContext = createContext<WishlistContextValue | null>(null);
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(wishlistReducer, { items: [] }, () => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("omh-wishlist");
-      if (stored) {
-        try {
-          return { items: JSON.parse(stored) };
-        } catch {
-          return { items: [] };
-        }
+  const [state, dispatch] = useReducer(wishlistReducer, { items: [] });
+  const [hydrated, setHydrated] = useState(false);
+
+  // Load persisted wishlist after mount (avoids SSR hydration mismatch)
+  useEffect(() => {
+    const stored = localStorage.getItem("omh-wishlist");
+    if (stored) {
+      try {
+        dispatch({ type: "SET", payload: JSON.parse(stored) });
+      } catch {
+        // ignore corrupted wishlist data
       }
     }
-    return { items: [] };
-  });
+    setHydrated(true);
+  }, []);
 
   // Persist to local storage
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("omh-wishlist", JSON.stringify(state.items));
-  }, [state.items]);
+  }, [state.items, hydrated]);
 
   // Auth listener to clear wishlist on sign out
   useEffect(() => {

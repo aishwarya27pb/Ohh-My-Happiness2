@@ -42,13 +42,40 @@
       "Bash(npm run *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/byob)",
       "Bash(grep -rln \"<table\" src/app/admin)",
-      "Bash(grep -rln \"overflow-x-auto\" src/app/admin)"
+      "Bash(grep -rln \"overflow-x-auto\" src/app/admin)",
+      "Bash(mkdir -p \"/Users/aishwaryabadiger/Kishore Websites/Ohh-My-Happiness2/.claude/skills/regression-testing\")",
+      "Edit(/.claude/skills/regression-testing/**)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(echo '{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git push --dry-run origin master\"}}' > /tmp/hook-test-input.json && echo \"payload ready\")",
+      "Bash(grep -qE '\\(^|&&|;\\)\\\\s*git push\\(\\\\s|$\\)')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/logo.jpg)",
+      "Bash(cd \"/Users/aishwaryabadiger/Kishore Websites/Ohh-My-Happiness2\" && rm -f audit-*.png && rm -rf .playwright-mcp && git status --short)",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\\\\n\")",
+      "mcp__plugin_playwright_playwright__browser_console_messages"
     ],
     "additionalDirectories": [
       "/Users/aishwaryabadiger/.claude",
       "/Users/aishwaryabadiger/ohh-my-happiness/src/app/account/orders",
       "/Users/aishwaryabadiger/ohh-my-happiness/src/app/admin/orders",
-      "/Users/aishwaryabadiger/ohh-my-happiness/src/app/admin/customers/[id]"
+      "/Users/aishwaryabadiger/ohh-my-happiness/src/app/admin/customers/[id]",
+      "/Users/aishwaryabadiger/Kishore Websites/Ohh-My-Happiness2/.claude/skills",
+      "/tmp",
+      "/Users/aishwaryabadiger/Kishore Websites/Ohh-My-Happiness2"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | grep -qE '(^|&&|;)\\s*git push(\\s|$)' && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"A git push just completed. Use the Skill tool to run the regression-testing skill (.claude/skills/regression-testing/SKILL.md) now to verify the push did not break anything (typecheck, lint, build, unit tests, e2e).\"}}' || true",
+            "statusMessage": "Triggering post-push regression tests..."
+          }
+        ]
+      }
     ]
   }
 }

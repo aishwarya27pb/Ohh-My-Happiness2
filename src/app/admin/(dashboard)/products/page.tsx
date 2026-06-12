@@ -125,7 +125,7 @@ export default function AdminProductsPage() {
                     <td className="px-6 py-4">
                       <div>
                         <p className="text-sm font-bold text-[#1A1A1A]">₹{p.price.toLocaleString()}</p>
-                        {p.originalPrice && (
+                        {!!p.originalPrice && (
                           <p className="text-[10px] text-[#6B6B6B] line-through">₹{p.originalPrice.toLocaleString()}</p>
                         )}
                       </div>

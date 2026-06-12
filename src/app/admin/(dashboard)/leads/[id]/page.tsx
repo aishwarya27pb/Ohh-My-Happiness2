@@ -105,7 +105,7 @@ export default function AdminLeadDetailPage() {
               {lead.occasion && (
                 <div><span className="text-[#6B6B6B]">Occasion: </span><span className="capitalize font-medium">{lead.occasion}</span></div>
               )}
-              {lead.quantity && (
+              {!!lead.quantity && (
                 <div><span className="text-[#6B6B6B]">Quantity: </span><span className="font-medium">{lead.quantity}</span></div>
               )}
               {lead.budget && (

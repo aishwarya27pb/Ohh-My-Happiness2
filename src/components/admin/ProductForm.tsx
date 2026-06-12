@@ -140,9 +140,9 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
 
   return (
     <form onSubmit={handleSubmit} className="max-w-5xl space-y-8">
-      <div className="flex items-center justify-between">
-        <Link 
-          href="/admin/products" 
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <Link
+          href="/admin/products"
           className="flex items-center gap-2 text-sm text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors"
         >
           <ChevronLeft size={16} /> Back to Products
@@ -150,7 +150,7 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary flex items-center gap-2 px-8"
+          className="btn-primary flex items-center justify-center gap-2 px-8"
         >
           {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
           {initialData ? "Save Changes" : "Create Product"}
@@ -176,7 +176,7 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-[#6B6B6B] uppercase">URL Slug</label>
                 <input
@@ -262,7 +262,7 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
                 value={imgInput}
                 onChange={(e) => setImgInput(e.target.value)}
                 placeholder="Or paste image URL..."
-                className="flex-1 px-4 py-2 rounded-xl border border-gray-200 outline-none focus:border-[#FFB449] transition-all text-sm"
+                className="flex-1 min-w-0 px-4 py-2 rounded-xl border border-gray-200 outline-none focus:border-[#FFB449] transition-all text-sm"
               />
               <button 
                 type="button" 
@@ -386,7 +386,7 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 placeholder="e.g. luxury"
-                className="flex-1 px-4 py-2 rounded-xl border border-gray-200 outline-none"
+                className="flex-1 min-w-0 px-4 py-2 rounded-xl border border-gray-200 outline-none"
               />
               <button type="button" onClick={addTag} className="bg-gray-100 p-2 rounded-xl"><Plus size={20}/></button>
             </div>

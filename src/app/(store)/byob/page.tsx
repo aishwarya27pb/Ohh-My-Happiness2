@@ -193,7 +193,7 @@ export default function BYOBPage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_340px] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
           {/* Main Builder Area */}
           <div>
             {/* Step indicator (mobile-friendly horizontal) */}
@@ -509,9 +509,9 @@ function Step2AddGifts({
   };
 
   return (
-    <div className="grid md:grid-cols-[1fr_300px] gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
       {/* Box drop zone — the highlighted centerpiece */}
-      <div className="bg-white rounded-[32px] shadow-md shadow-amber/10 border-2 border-golden/40 p-6 sm:p-8 relative">
+      <div className="bg-white rounded-[32px] shadow-md shadow-amber/10 border-2 border-golden/40 p-6 sm:p-8 relative min-w-0">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-2xl font-black text-[#1A1A1A]">Your Gift Box</h2>
@@ -655,21 +655,21 @@ function Step3Personalize({
   setSelection: React.Dispatch<React.SetStateAction<BYOBSelection>>;
 }) {
   return (
-    <div className="bg-white rounded-[32px] shadow-sm border border-peach/60 p-8 sm:p-10 space-y-10">
+    <div className="bg-white rounded-[32px] shadow-sm border border-peach/60 p-5 sm:p-8 lg:p-10 space-y-8 sm:space-y-10">
       <div>
-        <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">The Personal Touch</h2>
+        <h2 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-2">The Personal Touch</h2>
         <p className="text-[#6B6B6B] text-sm">Choose a card and write a message for your recipient.</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <div>
-          <label className="block text-xs font-bold text-[#1A1A1A] mb-4 uppercase tracking-widest">Select a Card</label>
-          <div className="grid grid-cols-3 gap-4">
+          <label className="block text-xs font-bold text-[#1A1A1A] mb-3 sm:mb-4 uppercase tracking-widest">Select a Card</label>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {["Birthday", "Anniversary", "General"].map((card) => (
               <div
                 key={card}
                 onClick={() => setSelection({ ...selection, card })}
-                className={`cursor-pointer py-4 px-6 rounded-2xl border-2 text-center font-bold text-sm transition-all ${
+                className={`cursor-pointer py-3 sm:py-4 px-1.5 sm:px-6 rounded-2xl border-2 text-center font-bold text-xs sm:text-sm transition-all ${
                   selection.card === card ? "bg-amber border-amber text-white" : "border-gray-100 text-[#6B6B6B] hover:border-golden"
                 }`}
               >
@@ -680,19 +680,19 @@ function Step3Personalize({
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1A1A1A] mb-4 uppercase tracking-widest">Your Message</label>
+          <label className="block text-xs font-bold text-[#1A1A1A] mb-3 sm:mb-4 uppercase tracking-widest">Your Message</label>
           <textarea
             value={selection.message}
             onChange={(e) => setSelection({ ...selection, message: e.target.value })}
             placeholder="Type your heartfelt message here..."
-            className="w-full h-36 p-6 rounded-3xl bg-cream border-none focus:ring-2 focus:ring-amber text-[#1A1A1A] placeholder:text-gray-400"
+            className="w-full h-36 p-4 sm:p-6 rounded-3xl bg-cream border-none focus:ring-2 focus:ring-amber text-[#1A1A1A] placeholder:text-gray-400"
           />
         </div>
       </div>
 
-      <div className="pt-8 border-t border-peach">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-peach flex items-center justify-center text-amber">
+      <div className="pt-6 sm:pt-8 border-t border-peach">
+        <div className="flex items-center gap-3 mb-5 sm:mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-peach flex items-center justify-center text-amber shrink-0">
             <Sparkles size={22} />
           </div>
           <div>
@@ -701,7 +701,7 @@ function Step3Personalize({
           </div>
         </div>
 
-        <div className="bg-cream rounded-3xl p-6 space-y-4">
+        <div className="bg-cream rounded-3xl p-4 sm:p-6 space-y-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-[#6B6B6B]">Selected Box</span>
             <span className="font-bold text-[#1A1A1A]">{selection.box?.name ?? "—"}</span>

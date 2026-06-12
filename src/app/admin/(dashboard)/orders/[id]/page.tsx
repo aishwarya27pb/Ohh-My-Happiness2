@@ -54,7 +54,7 @@ export default function AdminOrderDetailPage() {
   }
 
   return (
-    <div className="p-8 bg-[#FAFAFA] min-h-screen">
+    <div className="p-4 sm:p-8 bg-[#FAFAFA] min-h-screen">
       {/* Print Styles */}
       <style jsx global>{`
         @media print {
@@ -73,14 +73,14 @@ export default function AdminOrderDetailPage() {
         }
       `}</style>
 
-      <div className="flex items-center justify-between mb-8 no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 no-print">
         <div className="flex items-center gap-3">
-          <Link href="/admin/orders" className="p-2.5 rounded-2xl bg-white border border-[#E5E5E5] hover:border-[#FFB449] transition-all">
+          <Link href="/admin/orders" className="p-2.5 rounded-2xl bg-white border border-[#E5E5E5] hover:border-[#FFB449] transition-all shrink-0">
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-black text-[#1A1A1A]">Order #{order.order_number}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="text-xl sm:text-2xl font-black text-[#1A1A1A]">Order #{order.order_number}</h1>
               <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full ${STATUS_STYLES[order.status] ?? "bg-gray-100"}`}>
                 {order.status}
               </span>
@@ -89,7 +89,7 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={handlePrint}
             className="flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white rounded-2xl text-xs font-bold hover:bg-[#FF8A00] transition-all shadow-lg shadow-[#1A1A1A]/10"
           >

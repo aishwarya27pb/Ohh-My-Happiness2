@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useState } from "react";
 import type { CartItem, Product } from "@/types";
 import { Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -145,38 +145,42 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, initialState, () => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("omh-cart");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          // Migration: Add IDs to legacy cart items if missing
-          const itemsWithIds = parsed.map((item: any) => {
-            if (!item.id) {
-              return {
-                ...item,
-                id: generateCartItemId(item.product.id, item.selectedVariants)
-              };
-            }
-            return item;
-          });
-          
-          const storedCoupon = localStorage.getItem("omh-coupon");
-          const appliedCoupon = storedCoupon ? JSON.parse(storedCoupon) : null;
-          return { ...initialState, items: itemsWithIds, appliedCoupon };
-        } catch {
-          return initialState;
-        }
+  const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Load persisted cart/coupon from localStorage after mount (avoids SSR hydration mismatch)
+  useEffect(() => {
+    const stored = localStorage.getItem("omh-cart");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        // Migration: Add IDs to legacy cart items if missing
+        const itemsWithIds = parsed.map((item: any) => {
+          if (!item.id) {
+            return {
+              ...item,
+              id: generateCartItemId(item.product.id, item.selectedVariants)
+            };
+          }
+          return item;
+        });
+
+        const storedCoupon = localStorage.getItem("omh-coupon");
+        const appliedCoupon = storedCoupon ? JSON.parse(storedCoupon) : null;
+        dispatch({ type: "SET_CART", payload: itemsWithIds });
+        if (appliedCoupon) dispatch({ type: "SET_COUPON", payload: appliedCoupon });
+      } catch {
+        // ignore corrupted cart data
       }
     }
-    return initialState;
-  });
+    setHydrated(true);
+  }, []);
 
   // Persist to localStorage
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem("omh-cart", JSON.stringify(state.items));
-  }, [state.items]);
+  }, [state.items, hydrated]);
 
   // Sync to database if logged in
   useEffect(() => {
@@ -192,12 +196,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [state.items]);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (state.appliedCoupon) {
       localStorage.setItem("omh-coupon", JSON.stringify(state.appliedCoupon));
     } else {
       localStorage.removeItem("omh-coupon");
     }
-  }, [state.appliedCoupon]);
+  }, [state.appliedCoupon, hydrated]);
 
   // Handle Login/Logout Cart Sync
   useEffect(() => {

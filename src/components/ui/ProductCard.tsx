@@ -72,13 +72,12 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
               New
             </span>
           )}
+          {!!discount && (
+            <span className="bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm self-start">
+              {discount}% OFF
+            </span>
+          )}
         </div>
-
-        {discount && (
-          <div className="absolute top-4 right-14 bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm z-10">
-            {discount}% OFF
-          </div>
-        )}
 
         {/* Wishlist */}
         <button
@@ -108,15 +107,15 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
           {product.name}
         </h3>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-y-1">
           <div className="flex items-baseline gap-2">
             <span className="font-black text-[#1A1A1A] text-lg">₹{product.price.toLocaleString()}</span>
-            {product.originalPrice && (
+            {!!product.originalPrice && (
               <span className="text-xs text-[#6B6B6B] line-through opacity-60">₹{product.originalPrice.toLocaleString()}</span>
             )}
           </div>
           {product.customizable && (
-            <div className="flex items-center gap-1 bg-[#FFF9EE] px-2 py-0.5 rounded-full border border-[#FFE4C2]" title="Customizable">
+            <div className="flex items-center gap-1 bg-[#FFF9EE] px-2 py-0.5 rounded-full border border-[#FFE4C2] shrink-0" title="Customizable">
               <Sparkles size={10} className="text-[#FF8A00]" />
               <span className="text-[8px] font-black text-[#FF8A00] uppercase tracking-tighter">Custom</span>
             </div>

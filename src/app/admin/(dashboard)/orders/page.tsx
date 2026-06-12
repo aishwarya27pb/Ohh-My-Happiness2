@@ -61,8 +61,8 @@ export default async function AdminOrdersPage() {
   }));
 
   return (
-    <div className="p-8 bg-[#FAFAFA] min-h-screen">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-8 bg-[#FAFAFA] min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black text-[#1A1A1A] tracking-tight">Order Management</h1>
           <p className="text-[#6B6B6B] text-sm mt-1">Monitor sales performance and logistics</p>

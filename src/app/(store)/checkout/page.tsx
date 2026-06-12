@@ -106,7 +106,7 @@ export default function CheckoutPage() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Forms */}
         <div className="lg:col-span-2">
           {/* Step 0 — Delivery */}

@@ -52,7 +52,18 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/logo.jpg)",
       "Bash(cd \"/Users/aishwaryabadiger/Kishore Websites/Ohh-My-Happiness2\" && rm -f audit-*.png && rm -rf .playwright-mcp && git status --short)",
       "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\\\\n\")",
-      "mcp__plugin_playwright_playwright__browser_console_messages"
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "Bash(grep -L \"getUser\\\\|auth.getUser\\\\|redirect\" src/app/admin/\\\\\\(dashboard\\\\\\)/*/page.tsx src/app/admin/\\\\\\(dashboard\\\\\\)/page.tsx)",
+      "Bash(grep -l \"getUser\\\\|redirect\" src/app/admin/\\\\\\(dashboard\\\\\\)/*/page.tsx src/app/admin/\\\\\\(dashboard\\\\\\)/page.tsx)",
+      "Bash(curl -sI http://localhost:3000/)",
+      "Bash(curl -sI http://localhost:3000/api/migrate)",
+      "Bash(curl -sD - -o /dev/null http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/migrate --max-time 5)",
+      "Bash(disown)",
+      "Bash(curl -s -o /dev/null -w \"homepage: %{http_code}\\\\n\" http://localhost:3000/ --max-time 15)",
+      "Bash(curl -sD - -o /dev/null http://localhost:3000/ --max-time 10)",
+      "Bash(curl -s http://localhost:3000/api/debug-products --max-time 10)",
+      "mcp__plugin_playwright_playwright__browser_press_key"
     ],
     "additionalDirectories": [
       "/Users/aishwaryabadiger/.claude",

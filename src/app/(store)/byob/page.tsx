@@ -74,7 +74,8 @@ const SHAPE_RADIUS: Record<GiftShape, string> = {
 
 const BOX_W = 380;
 const BOX_H = 440;
-const GIFT_GAP = 8; // breathing room so real objects don't visually overlap
+const BOX_PADDING = 12;
+const GIFT_GAP = 6;
 
 function shapeOf(item: GiftItem): GiftShape {
   return ITEM_SHAPE[item.slug] ?? "card";
@@ -95,11 +96,16 @@ function findOpenSpot(
   desiredX: number,
   desiredY: number
 ): { x: number; y: number } | null {
-  const STEP = 14;
+  const STEP = 8;
+  const minX = BOX_PADDING;
+  const minY = BOX_PADDING;
+  const maxX = BOX_W - w - BOX_PADDING;
+  const maxY = BOX_H - h - BOX_PADDING;
+  if (maxX < minX || maxY < minY) return null;
   let best: { x: number; y: number } | null = null;
   let bestDist = Infinity;
-  for (let y = 0; y <= BOX_H - h; y += STEP) {
-    for (let x = 0; x <= BOX_W - w; x += STEP) {
+  for (let y = minY; y <= maxY; y += STEP) {
+    for (let x = minX; x <= maxX; x += STEP) {
       const collides = placed.some((p) => rectsCollide(x, y, w, h, p.x, p.y, p.w, p.h));
       if (!collides) {
         const dx = x - desiredX;
@@ -331,14 +337,23 @@ function Step1BoxSelection({
         <p className="text-[#6B6B6B] text-sm">Pick a premium box style that suits the occasion.</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" style={{ perspective: 900 }}>
         {BOX_TYPES.map((box) => (
-          <div
+          <motion.div
             key={box.id}
             onClick={() => setSelection({ ...selection, box })}
-            className={`cursor-pointer group relative rounded-3xl border-2 transition-all duration-300 overflow-hidden ${
+            whileHover={{
+              rotateY: -5,
+              rotateX: 3,
+              scale: 1.03,
+              boxShadow: "0 16px 32px rgba(0,0,0,0.12)",
+            }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className={`cursor-pointer group relative rounded-3xl border-2 overflow-hidden ${
               selection.box?.id === box.id ? "border-amber bg-cream" : "border-gray-100 hover:border-golden"
             }`}
+            style={{ transformStyle: "preserve-3d" }}
           >
             <div className="aspect-square relative">
               <img src={box.image} alt={box.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -354,7 +369,7 @@ function Step1BoxSelection({
               <p className="font-bold text-[#1A1A1A]">{box.name}</p>
               <p className="text-amber font-black mt-1">₹{box.price}</p>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
@@ -438,16 +453,18 @@ function Step2AddGifts({
   const placeItem = (item: GiftItem, desiredX?: number, desiredY?: number) => {
     if (selection.items.find((i) => i.id === item.id)) return;
     if (selection.items.length >= MAX_ITEMS) {
+      toast.error("Box is full! Remove an item first.");
       flashFullWarning();
       return;
     }
     const { w, h } = SHAPE_SIZE[shapeOf(item)];
     const dx = desiredX ?? (BOX_W - w) / 2;
     const dy = desiredY ?? (BOX_H - h) / 2;
-    const clampedX = Math.min(Math.max(dx, 0), BOX_W - w);
-    const clampedY = Math.min(Math.max(dy, 0), BOX_H - h);
+    const clampedX = Math.min(Math.max(dx, BOX_PADDING), BOX_W - w - BOX_PADDING);
+    const clampedY = Math.min(Math.max(dy, BOX_PADDING), BOX_H - h - BOX_PADDING);
     const spot = findOpenSpot(w, h, placedRects, clampedX, clampedY);
     if (!spot) {
+      toast.error("Not enough space — try removing an item or rearranging.");
       flashFullWarning();
       return;
     }
@@ -455,15 +472,16 @@ function Step2AddGifts({
     setSelection({ ...selection, items: [...selection.items, item] });
   };
 
-  // Re-settles an already-placed gift at (or near) a new spot the user dragged
-  // it to — snapping to the nearest free space if something else is there.
   const repositionItem = (item: GiftItem, desiredX: number, desiredY: number) => {
     const { w, h } = SHAPE_SIZE[shapeOf(item)];
-    const clampedX = Math.min(Math.max(desiredX, 0), BOX_W - w);
-    const clampedY = Math.min(Math.max(desiredY, 0), BOX_H - h);
+    const clampedX = Math.min(Math.max(desiredX, BOX_PADDING), BOX_W - w - BOX_PADDING);
+    const clampedY = Math.min(Math.max(desiredY, BOX_PADDING), BOX_H - h - BOX_PADDING);
     const others = placedRects.filter((r) => r.id !== item.id);
     const spot = findOpenSpot(w, h, others, clampedX, clampedY);
-    if (!spot) return;
+    if (!spot) {
+      toast.error("Can't fit there — try a different spot.");
+      return;
+    }
     setPositions((prev) => ({ ...prev, [item.id]: spot }));
   };
 
@@ -510,7 +528,7 @@ function Step2AddGifts({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
-      {/* Box drop zone — the highlighted centerpiece */}
+      {/* Box drop zone — 2.5D isometric centerpiece */}
       <div className="bg-white rounded-[32px] shadow-md shadow-amber/10 border-2 border-golden/40 p-6 sm:p-8 relative min-w-0">
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -522,73 +540,142 @@ function Step2AddGifts({
           </span>
         </div>
 
-        <div
-          ref={boxRef}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragOver(true);
-          }}
-          onDragLeave={() => setIsDragOver(false)}
-          onDrop={handleDrop}
-          className={`relative mx-auto rounded-[28px] border-2 border-dashed transition-colors duration-200 ${
-            isDragOver ? "border-amber bg-peach/50" : "border-golden bg-cream"
-          }`}
-          style={{ width: BOX_W, height: BOX_H, maxWidth: "100%" }}
-        >
-          {selection.items.length === 0 && (
-            <p className="absolute inset-x-4 bottom-5 text-center text-xs text-[#6B6B6B] italic flex items-center justify-center gap-2">
-              <Package size={16} className="text-golden shrink-0" />
-              Drag a gift and drop it anywhere — it lands right where you place it
-            </p>
-          )}
+        {/* Perspective wrapper — clips 3D overflow */}
+        <div style={{ perspective: 1200 }} className="flex justify-center overflow-hidden rounded-[30px]">
+          <motion.div
+            ref={boxRef}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={handleDrop}
+            animate={{
+              rotateX: isDragOver ? 20 : 25,
+              scale: isDragOver ? 1.02 : 1,
+            }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            className={`relative rounded-[28px] border-2 border-dashed transition-colors duration-200 ${
+              isDragOver ? "border-amber bg-peach/50" : "border-golden bg-cream"
+            }`}
+            style={{
+              width: BOX_W,
+              height: BOX_H,
+              maxWidth: "100%",
+              transformStyle: "preserve-3d",
+              boxShadow: isDragOver
+                ? "0 30px 60px -10px rgba(255, 138, 0, 0.25), inset 0 -8px 20px rgba(0,0,0,0.06)"
+                : "0 25px 50px -12px rgba(0,0,0,0.15), inset 0 -6px 16px rgba(0,0,0,0.04), inset 6px 0 12px rgba(0,0,0,0.02), inset -6px 0 12px rgba(0,0,0,0.02)",
+            }}
+          >
+            {/* Inner wall shadows for depth illusion */}
+            <div className="absolute inset-0 rounded-[26px] pointer-events-none" style={{
+              boxShadow: "inset 0 8px 16px rgba(0,0,0,0.08), inset 0 -2px 8px rgba(255,180,73,0.1)",
+            }} />
 
-          <AnimatePresence>
-            {selection.items.map((item) => {
-              const shape = shapeOf(item);
-              const { w, h } = SHAPE_SIZE[shape];
-              const pos = positions[item.id] ?? { x: 0, y: 0 };
-              return (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.6, y: -50 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.15 } }}
-                  transition={{ type: "spring", stiffness: 360, damping: 26 }}
-                  whileHover={{ scale: 1.04 }}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item)}
-                  onClick={() => removeItem(item.id)}
-                  title="Drag to move • click to remove"
-                  style={{ position: "absolute", left: pos.x, top: pos.y, width: w, height: h }}
-                  className={`overflow-hidden border-2 border-white shadow-lg cursor-grab active:cursor-grabbing group ${SHAPE_RADIUS[shape]}`}
-                >
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" draggable={false} />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="text-white text-[10px] font-bold">Drag to move • Click to remove</span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {showFullWarning && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 whitespace-nowrap z-10"
-              >
-                <AlertCircle size={14} />
-                No space left in the box!
-              </motion.div>
+            {selection.items.length === 0 && (
+              <p className="absolute inset-x-4 bottom-5 text-center text-xs text-[#6B6B6B] italic flex items-center justify-center gap-2">
+                <Package size={16} className="text-golden shrink-0" />
+                Drag a gift and drop it anywhere — it lands right where you place it
+              </p>
             )}
-          </AnimatePresence>
+
+            <AnimatePresence>
+              {selection.items.map((item, idx) => {
+                const shape = shapeOf(item);
+                const { w, h } = SHAPE_SIZE[shape];
+                const pos = positions[item.id] ?? { x: 0, y: 0 };
+                const depth = idx + 1;
+                const thickness = 10;
+                return (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.5, y: -80, rotateX: -30 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1 + depth * 0.01,
+                      y: 0,
+                      rotateX: -8,
+                    }}
+                    exit={{ opacity: 0, scale: 0.4, y: -40, rotateX: -20, transition: { duration: 0.15 } }}
+                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                    whileHover={{ scale: 1.06 + depth * 0.01, y: -6, rotateX: -4 }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item)}
+                    onClick={() => removeItem(item.id)}
+                    title="Drag to move • click to remove"
+                    style={{
+                      position: "absolute",
+                      left: pos.x,
+                      top: pos.y,
+                      width: w,
+                      height: h,
+                      zIndex: depth * 10,
+                      transformStyle: "preserve-3d",
+                      transform: `translateZ(${depth * 4}px)`,
+                    }}
+                    className="cursor-grab active:cursor-grabbing group"
+                  >
+                    {/* Front face — the product image */}
+                    <div
+                      className={`absolute inset-0 overflow-hidden border-2 border-white ${SHAPE_RADIUS[shape]}`}
+                      style={{
+                        transformStyle: "preserve-3d",
+                        transform: `translateZ(${thickness / 2}px)`,
+                        boxShadow: `0 ${4 + depth * 3}px ${8 + depth * 4}px rgba(0,0,0,${0.1 + depth * 0.03})`,
+                      }}
+                    >
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" draggable={false} />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <span className="text-white text-[10px] font-bold">Drag to move • Click to remove</span>
+                      </div>
+                    </div>
+                    {/* Bottom edge — gives thickness */}
+                    <div
+                      className={`absolute left-0 right-0 ${shape === "bottle" ? "rounded-b-2xl" : shape === "pen" ? "rounded-full" : "rounded-b-lg"}`}
+                      style={{
+                        bottom: 0,
+                        height: thickness,
+                        background: "linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.25))",
+                        transform: `rotateX(-90deg) translateZ(0px)`,
+                        transformOrigin: "bottom center",
+                      }}
+                    />
+                    {/* Right edge — gives side depth */}
+                    <div
+                      className={`absolute top-0 bottom-0 ${shape === "bottle" ? "rounded-r-2xl" : shape === "pen" ? "rounded-full" : "rounded-r-lg"}`}
+                      style={{
+                        right: 0,
+                        width: thickness,
+                        background: "linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.2))",
+                        transform: `rotateY(90deg) translateZ(0px)`,
+                        transformOrigin: "right center",
+                      }}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showFullWarning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 whitespace-nowrap z-10"
+                >
+                  <AlertCircle size={14} />
+                  No space left in the box!
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 
-      {/* Individual gifts panel */}
+      {/* Individual gifts panel — subtle 3D hover */}
       <div className="bg-white rounded-[28px] shadow-sm border border-peach/60 p-5 sm:p-6">
         <h3 className="text-lg font-black text-[#1A1A1A] mb-4">Individual Gifts</h3>
         <div className="flex flex-wrap gap-2 mb-5">
@@ -610,18 +697,30 @@ function Step2AddGifts({
         ) : visibleItems.length === 0 ? (
           <p className="text-sm text-[#6B6B6B] italic py-8 text-center">No gifts available in this category yet.</p>
         ) : (
-        <div className="grid grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1" style={{ perspective: 800 }}>
           {visibleItems.map((item) => {
             const isSelected = !!selection.items.find((i) => i.id === item.id);
             return (
-              <div
+              <motion.div
                 key={item.id}
                 draggable
-                onDragStart={(e) => handleDragStart(e, item)}
+                onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item)}
                 onClick={() => toggleItem(item)}
-                className={`cursor-grab active:cursor-grabbing group relative rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
+                whileHover={{
+                  rotateY: -4,
+                  rotateX: 2,
+                  scale: 1.03,
+                  boxShadow: "0 12px 24px rgba(0,0,0,0.12)",
+                }}
+                animate={isSelected ? {
+                  y: [0, -3, 0],
+                  transition: { repeat: Infinity, duration: 2.5, ease: "easeInOut" },
+                } : { y: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className={`cursor-grab active:cursor-grabbing group relative rounded-2xl border-2 transition-colors duration-300 overflow-hidden ${
                   isSelected ? "border-amber bg-cream" : "border-gray-100 hover:border-golden"
                 }`}
+                style={{ transformStyle: "preserve-3d" }}
               >
                 <div className="aspect-square relative">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" draggable={false} />
@@ -635,7 +734,7 @@ function Step2AddGifts({
                   <p className="font-bold text-xs text-[#1A1A1A] truncate">{item.name}</p>
                   <p className="text-amber text-xs font-black mt-0.5">₹{item.price}</p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>

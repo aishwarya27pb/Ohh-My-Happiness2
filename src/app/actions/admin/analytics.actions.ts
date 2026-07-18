@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, verifyAdmin } from "@/lib/supabase/server";
 
 export interface DashboardMetrics {
   totalRevenue: number;
@@ -21,6 +21,7 @@ export interface DashboardMetrics {
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
+  await verifyAdmin();
   const supabase = await createClient();
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();

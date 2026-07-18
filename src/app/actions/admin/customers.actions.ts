@@ -4,10 +4,12 @@ import { getAllCustomers, getProfileById, updateProfile } from "@/lib/services/c
 import { getOrdersByProfile } from "@/lib/services/orders.service";
 import type { Profile, OrderWithItems } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
+import { verifyAdmin } from "@/lib/supabase/server";
 
 export async function getCustomersAction(
   search?: string
 ): Promise<Profile[]> {
+  await verifyAdmin();
   return getAllCustomers(search);
 }
 
@@ -15,6 +17,7 @@ export async function getCustomerAction(id: string): Promise<{
   profile: Profile | null;
   orders: OrderWithItems[];
 }> {
+  await verifyAdmin();
   const [profile, orders] = await Promise.all([
     getProfileById(id),
     getOrdersByProfile(id),
@@ -27,6 +30,7 @@ export async function updateCustomerNotesAction(
   notes: { phone: string; firstName?: string; lastName?: string }
 ): Promise<{ error?: string }> {
   try {
+    await verifyAdmin();
     await updateProfile(id, {
       first_name: notes.firstName,
       last_name: notes.lastName,

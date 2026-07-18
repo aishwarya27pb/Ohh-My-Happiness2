@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, verifyAdmin } from "@/lib/supabase/server";
 import { createOrder, updateOrderStatus } from "@/lib/services/orders.service";
 import type { CartItemParam } from "@/lib/services/orders.service";
 import type { OrderStatus } from "@/lib/supabase/types";
@@ -111,6 +111,7 @@ export async function updateOrderStatusAction(
   status: OrderStatus
 ): Promise<{ error?: string }> {
   try {
+    await verifyAdmin();
     await updateOrderStatus(orderId, status);
     return {};
   } catch (err) {

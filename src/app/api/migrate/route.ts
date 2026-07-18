@@ -4,8 +4,25 @@ import { categories, products } from "@/data/products.backup";
 import { env } from "@/env";
 
 export async function GET() {
-  if (process.env.NODE_ENV === "production") {
-    return new Response("Forbidden", { status: 403 });
+  if (process.env.NODE_ENV !== "development") {
+    try {
+      const { createClient: createServerClient } = await import("@/lib/supabase/server");
+      const supabase = await createServerClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return new Response("Forbidden", { status: 403 });
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role !== "admin") {
+        return new Response("Forbidden", { status: 403 });
+      }
+    } catch {
+      return new Response("Forbidden", { status: 403 });
+    }
   }
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY;

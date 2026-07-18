@@ -7,6 +7,7 @@ import {
 } from "@/lib/services/orders.service";
 import type { OrderWithItems, OrderStatus } from "@/lib/supabase/types";
 import { revalidatePath } from "next/cache";
+import { verifyAdmin } from "@/lib/supabase/server";
 
 export async function getOrdersAction(filters?: {
   status?: string;
@@ -14,6 +15,7 @@ export async function getOrdersAction(filters?: {
   limit?: number;
   offset?: number;
 }): Promise<{ orders: OrderWithItems[] }> {
+  await verifyAdmin();
   const orders = await getAllOrders(filters);
   return { orders };
 }
@@ -21,6 +23,7 @@ export async function getOrdersAction(filters?: {
 export async function getOrderAction(
   id: string
 ): Promise<{ order: OrderWithItems | null }> {
+  await verifyAdmin();
   const order = await getOrderById(id);
   return { order };
 }
@@ -30,6 +33,7 @@ export async function updateOrderStatusAction(
   status: OrderStatus
 ): Promise<{ error?: string }> {
   try {
+    await verifyAdmin();
     await updateOrderStatus(orderId, status);
     revalidatePath("/admin/orders");
     revalidatePath(`/admin/orders/${orderId}`);

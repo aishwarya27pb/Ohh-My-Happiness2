@@ -233,7 +233,7 @@ export default function Header() {
 
               {/* Auth UI */}
               {user ? (
-                <div className="relative hidden lg:block group/tip" ref={userMenuRef}>
+                <div className="relative group/tip" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen((v) => !v)}
                     className="flex items-center gap-1.5 p-1.5 rounded-full hover:bg-[#FFE4C2] transition-colors"
@@ -289,7 +289,7 @@ export default function Header() {
                   )}
                 </div>
               ) : (
-                <div className="relative hidden lg:block group/tip">
+                <div className="relative group/tip">
                   <Link
                     href="/auth/login"
                     className="flex items-center gap-1.5 p-2 rounded-full hover:bg-[#FFE4C2] transition-colors"

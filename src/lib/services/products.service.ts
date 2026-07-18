@@ -50,17 +50,11 @@ export async function getProductSlugsForStaticParams(): Promise<{ id: string }[]
 
 export const productsService = {
   async getProducts(): Promise<Product[]> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
       .order("created_at", { ascending: false });
-
-    // Note: In a production environment with Next.js fetch, we would add:
-    // next: { tags: ['products'] }
-    // Since we are using the Supabase client, we rely on revalidatePath
-    // which I have already added to the actions.
-
 
     if (error) {
       console.error("Error fetching products:", error);
@@ -71,7 +65,7 @@ export const productsService = {
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -86,8 +80,25 @@ export const productsService = {
     return data ? mapProduct(data) : null;
   },
 
+  async getRelatedProducts(categorySlug: string, excludeId: string, limit = 4): Promise<Product[]> {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("category_slug", categorySlug)
+      .neq("id", excludeId)
+      .limit(limit);
+
+    if (error) {
+      console.error("Error fetching related products:", error);
+      return [];
+    }
+
+    return (data ?? []).map(mapProduct);
+  },
+
   async getCategories(): Promise<Category[]> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("categories")
       .select("*")
@@ -102,7 +113,7 @@ export const productsService = {
   },
 
   async getFeaturedProducts(): Promise<Product[]> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -118,7 +129,7 @@ export const productsService = {
   },
 
   async getProductById(id: string): Promise<Product | null> {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("products")
       .select("*")

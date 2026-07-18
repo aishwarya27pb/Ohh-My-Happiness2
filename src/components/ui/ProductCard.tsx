@@ -79,15 +79,32 @@ export default function ProductCard({ product, className = "" }: ProductCardProp
           )}
         </div>
 
-        {/* Wishlist */}
+        {/* Wishlist Button */}
         <button
-          onClick={(e) => { e.preventDefault(); toggle(product); }}
+          onClick={(e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            toggle(product); 
+          }}
           className={`absolute top-4 right-4 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 z-10 ${
             wishlisted ? "bg-red-50 text-red-500" : "bg-white/80 backdrop-blur-sm text-[#6B6B6B] hover:bg-white hover:text-red-500"
-          } ${isHovered ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
+          } lg:opacity-0 lg:scale-90 lg:group-hover:opacity-100 lg:group-hover:scale-100 opacity-100 scale-100`}
           aria-label="Wishlist"
         >
           <Heart size={18} className={wishlisted ? "fill-red-500" : ""} />
+        </button>
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={(e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            addItem(product, 1, {}); 
+          }}
+          className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-[#FF8A00] text-white shadow-lg flex items-center justify-center hover:bg-[#FFB449] hover:text-[#1A1A1A] transition-all duration-300 z-10 lg:opacity-0 lg:scale-90 lg:group-hover:opacity-100 lg:group-hover:scale-100 opacity-100 scale-100"
+          aria-label="Add to cart"
+        >
+          <ShoppingCart size={17} />
         </button>
       </div>
 

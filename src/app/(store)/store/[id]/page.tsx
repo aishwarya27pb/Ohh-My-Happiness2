@@ -59,8 +59,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const product = await productsService.getProductBySlug(id);
   if (!product) notFound();
 
-  const allProducts = await productsService.getProducts();
-  const related = allProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = await productsService.getRelatedProducts(product.category, product.id, 4);
 
   // Structured Data (JSON-LD)
   const jsonLd = {

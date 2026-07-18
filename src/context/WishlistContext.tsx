@@ -62,6 +62,18 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setHydrated(true);
   }, []);
 
+  // Helper to merge local storage and database wishlists cleanly
+  const mergeWishlists = (local: Product[], saved: Product[]): Product[] => {
+    const map = new Map<string, Product>();
+    local.forEach(p => {
+      if (p && p.id) map.set(p.id, p);
+    });
+    saved.forEach(p => {
+      if (p && p.id) map.set(p.id, p);
+    });
+    return Array.from(map.values());
+  };
+
   // Fetch database wishlist if user is already logged in at initial load
   useEffect(() => {
     if (!hydrated) return;
@@ -73,9 +85,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         setCurrentUserId(user.id);
         const { wishlist } = await getSavedWishlistAction();
-        if (wishlist && wishlist.length > 0) {
-          dispatch({ type: "SET", payload: wishlist });
-        }
+        const localStored = localStorage.getItem("omh-wishlist");
+        const localItems = localStored ? JSON.parse(localStored) : [];
+        const merged = mergeWishlists(localItems, wishlist || []);
+        dispatch({ type: "SET", payload: merged });
         setLoadedFromDB(true);
       } else {
         setCurrentUserId(null);
@@ -103,22 +116,22 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(syncTimeout);
   }, [state.items, hydrated, loadedFromDB, currentUserId]);
 
-  // Auth listener to load/clear wishlist on session changes
+  // Auth listener to load/merge wishlist on session changes
   useEffect(() => {
     const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         setCurrentUserId(session.user.id);
         const { wishlist } = await getSavedWishlistAction();
-        if (wishlist) {
-          dispatch({ type: "SET", payload: wishlist });
-        }
+        const localStored = localStorage.getItem("omh-wishlist");
+        const localItems = localStored ? JSON.parse(localStored) : [];
+        const merged = mergeWishlists(localItems, wishlist || []);
+        dispatch({ type: "SET", payload: merged });
         setLoadedFromDB(true);
       } else if (event === "SIGNED_OUT") {
         setCurrentUserId(null);
         setLoadedFromDB(false);
-        dispatch({ type: "CLEAR" });
-        localStorage.removeItem("omh-wishlist");
+        // Do NOT clear the local storage wishlist on logout so items are never lost!
       }
     });
 

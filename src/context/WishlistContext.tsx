@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useState } from "react";
 import type { Product } from "@/types";
 import { createClient } from "@/lib/supabase/client";
+import { saveWishlistAction, getSavedWishlistAction } from "@/app/actions/wishlist.actions";
 
 interface WishlistState {
   items: Product[];
@@ -45,8 +46,10 @@ const WishlistContext = createContext<WishlistContextValue | null>(null);
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(wishlistReducer, { items: [] });
   const [hydrated, setHydrated] = useState(false);
+  const [loadedFromDB, setLoadedFromDB] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Load persisted wishlist after mount (avoids SSR hydration mismatch)
+  // Load persisted wishlist from localStorage after mount (avoids SSR hydration mismatch)
   useEffect(() => {
     const stored = localStorage.getItem("omh-wishlist");
     if (stored) {
@@ -59,17 +62,61 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setHydrated(true);
   }, []);
 
+  // Fetch database wishlist if user is already logged in at initial load
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const initWishlist = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        setCurrentUserId(user.id);
+        const { wishlist } = await getSavedWishlistAction();
+        if (wishlist && wishlist.length > 0) {
+          dispatch({ type: "SET", payload: wishlist });
+        }
+        setLoadedFromDB(true);
+      } else {
+        setCurrentUserId(null);
+        setLoadedFromDB(true); // Anonymous users don't need DB load
+      }
+    };
+
+    initWishlist();
+  }, [hydrated]);
+
   // Persist to local storage
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem("omh-wishlist", JSON.stringify(state.items));
   }, [state.items, hydrated]);
 
-  // Auth listener to clear wishlist on sign out
+  // Sync to database if logged in and wishlist has been successfully loaded from database
+  useEffect(() => {
+    if (!hydrated || !loadedFromDB || !currentUserId) return;
+
+    const syncTimeout = setTimeout(async () => {
+      await saveWishlistAction(state.items);
+    }, 1000); // Debounce sync by 1 second
+
+    return () => clearTimeout(syncTimeout);
+  }, [state.items, hydrated, loadedFromDB, currentUserId]);
+
+  // Auth listener to load/clear wishlist on session changes
   useEffect(() => {
     const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        setCurrentUserId(session.user.id);
+        const { wishlist } = await getSavedWishlistAction();
+        if (wishlist) {
+          dispatch({ type: "SET", payload: wishlist });
+        }
+        setLoadedFromDB(true);
+      } else if (event === "SIGNED_OUT") {
+        setCurrentUserId(null);
+        setLoadedFromDB(false);
         dispatch({ type: "CLEAR" });
         localStorage.removeItem("omh-wishlist");
       }

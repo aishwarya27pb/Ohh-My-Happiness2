@@ -27,6 +27,7 @@ export interface Database {
           email: string | null;
           phone: string | null;
           cart_data: Json | null;
+          wishlist_data: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -38,6 +39,7 @@ export interface Database {
           email?: string | null;
           phone?: string | null;
           cart_data?: Json | null;
+          wishlist_data?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -49,6 +51,7 @@ export interface Database {
           email?: string | null;
           phone?: string | null;
           cart_data?: Json | null;
+          wishlist_data?: Json | null;
           updated_at?: string;
         };
         Relationships: [];

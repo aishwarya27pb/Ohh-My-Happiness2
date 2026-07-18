@@ -147,6 +147,8 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const [hydrated, setHydrated] = useState(false);
+  const [loadedFromDB, setLoadedFromDB] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Load persisted cart/coupon from localStorage after mount (avoids SSR hydration mismatch)
   useEffect(() => {
@@ -176,24 +178,46 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setHydrated(true);
   }, []);
 
+  // Fetch database cart if user is already logged in at initial load
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const initCart = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        setCurrentUserId(user.id);
+        const { cart: savedCart } = await getSavedCartAction();
+        if (savedCart && savedCart.length > 0) {
+          dispatch({ type: "SET_CART", payload: savedCart });
+        }
+        setLoadedFromDB(true);
+      } else {
+        setCurrentUserId(null);
+        setLoadedFromDB(true); // Anonymous users don't need DB load
+      }
+    };
+
+    initCart();
+  }, [hydrated]);
+
   // Persist to localStorage
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem("omh-cart", JSON.stringify(state.items));
   }, [state.items, hydrated]);
 
-  // Sync to database if logged in
+  // Sync to database if logged in and cart has been successfully loaded from database
   useEffect(() => {
+    if (!hydrated || !loadedFromDB || !currentUserId) return;
+
     const syncTimeout = setTimeout(async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await saveCartAction(state.items);
-      }
+      await saveCartAction(state.items);
     }, 1000); // Debounce sync by 1 second
 
     return () => clearTimeout(syncTimeout);
-  }, [state.items]);
+  }, [state.items, hydrated, loadedFromDB, currentUserId]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -209,11 +233,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
+        setCurrentUserId(session.user.id);
         const { cart: savedCart } = await getSavedCartAction();
-        if (savedCart && savedCart.length > 0) {
+        if (savedCart) {
           dispatch({ type: "SET_CART", payload: savedCart });
         }
+        setLoadedFromDB(true);
       } else if (event === "SIGNED_OUT") {
+        setCurrentUserId(null);
+        setLoadedFromDB(false);
         dispatch({ type: "CLEAR_CART" });
         localStorage.removeItem("omh-cart");
         dispatch({ type: "SET_COUPON", payload: null });

@@ -27,6 +27,7 @@ const ScrollExpandMedia = ({
   scrollToExpand = "Scroll down to unwrap joy",
   children,
 }: ScrollExpandMediaProps) => {
+  const [targetProgress, setTargetProgress] = useState<number>(0);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [showContent, setShowContent] = useState<boolean>(false);
   const [mediaFullyExpanded, setMediaFullyExpanded] = useState<boolean>(false);
@@ -36,33 +37,62 @@ const ScrollExpandMedia = ({
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    setTargetProgress(0);
     setScrollProgress(0);
     setShowContent(false);
     setMediaFullyExpanded(false);
   }, []);
+
+  // Smooth lerp loop to interpolate scrollProgress towards targetProgress
+  useEffect(() => {
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      setScrollProgress((prev) => {
+        const diff = targetProgress - prev;
+        if (Math.abs(diff) < 0.0005) {
+          return targetProgress;
+        }
+        return prev + diff * 0.08; // smooth 8% step
+      });
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    return () => {
+      active = false;
+    };
+  }, [targetProgress]);
+
+  // Synchronize state unlocks with visual rendering progress
+  useEffect(() => {
+    if (scrollProgress >= 0.99) {
+      if (!mediaFullyExpanded) {
+        setMediaFullyExpanded(true);
+        setShowContent(true);
+      }
+    } else {
+      if (scrollProgress < 0.75 && showContent) {
+        setShowContent(false);
+      }
+    }
+  }, [scrollProgress, mediaFullyExpanded, showContent]);
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       // If fully expanded and scrolling up, and we are at the top of the window
       if (mediaFullyExpanded && e.deltaY < 0 && window.scrollY <= 5) {
         setMediaFullyExpanded(false);
+        setTargetProgress(0.95);
         e.preventDefault();
       } else if (!mediaFullyExpanded) {
         // Prevent default scrolling until the box is fully opened
         e.preventDefault();
-        const scrollDelta = e.deltaY * 0.0012; // Adjust opening speed
+        const scrollDelta = e.deltaY * 0.0005; // Extremely smooth wheel opening speed
         const newProgress = Math.min(
-          Math.max(scrollProgress + scrollDelta, 0),
+          Math.max(targetProgress + scrollDelta, 0),
           1
         );
-        setScrollProgress(newProgress);
-
-        if (newProgress >= 1) {
-          setMediaFullyExpanded(true);
-          setShowContent(true);
-        } else if (newProgress < 0.75) {
-          setShowContent(false);
-        }
+        setTargetProgress(newProgress);
       }
     };
 
@@ -78,24 +108,18 @@ const ScrollExpandMedia = ({
 
       if (mediaFullyExpanded && deltaY < -20 && window.scrollY <= 5) {
         setMediaFullyExpanded(false);
+        setTargetProgress(0.95);
         e.preventDefault();
       } else if (!mediaFullyExpanded) {
         e.preventDefault();
-        const scrollFactor = deltaY < 0 ? 0.009 : 0.006;
+        // Lower scroll factors on mobile devices for deliberate step-by-step feel
+        const scrollFactor = deltaY < 0 ? 0.0015 : 0.001;
         const scrollDelta = deltaY * scrollFactor;
         const newProgress = Math.min(
-          Math.max(scrollProgress + scrollDelta, 0),
+          Math.max(targetProgress + scrollDelta, 0),
           1
         );
-        setScrollProgress(newProgress);
-
-        if (newProgress >= 1) {
-          setMediaFullyExpanded(true);
-          setShowContent(true);
-        } else if (newProgress < 0.75) {
-          setShowContent(false);
-        }
-
+        setTargetProgress(newProgress);
         setTouchStartY(touchY);
       }
     };
@@ -142,7 +166,7 @@ const ScrollExpandMedia = ({
       );
       window.removeEventListener("touchend", handleTouchEnd as EventListener);
     };
-  }, [scrollProgress, mediaFullyExpanded, touchStartY]);
+  }, [targetProgress, mediaFullyExpanded, touchStartY]);
 
   useEffect(() => {
     const checkIfMobile = (): void => {

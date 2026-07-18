@@ -30,6 +30,17 @@ function LoginForm() {
   const [testimonialIdx, setTestimonialIdx] = useState(0);
 
   useEffect(() => {
+    const checkSession = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        router.push(nextPath);
+      }
+    };
+    checkSession();
+  }, [router, nextPath]);
+
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (resendTimer > 0) {
       interval = setInterval(() => {

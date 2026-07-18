@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package,
@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Banknote,
   PenLine,
+  X,
+  Plus,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { createClient } from "@/lib/supabase/client";
@@ -27,7 +29,6 @@ const BOX_TYPES = [
   { id: "eco-kraft", name: "Eco-Friendly Kraft", price: 200, image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80" },
 ];
 
-// Individual fillable gift items for the box (curated, not full hampers)
 interface GiftItem {
   id: string;
   slug: string;
@@ -37,17 +38,10 @@ interface GiftItem {
   category: string;
 }
 
-// Individual gifts are real catalog products (tagged "byob-gift" in Supabase) —
-// adding, editing, or removing one in the admin Products page updates this
-// builder automatically, keeping the storefront and admin in sync.
 const BYOB_GIFT_TAG = "byob-gift";
 
 type GiftShape = "bottle" | "mug" | "pen" | "small" | "card";
 
-// Each gift keeps its own real-world footprint — a bottle is tall & narrow, a
-// pen is a thin sliver, a book is a wide card — so it looks like the actual
-// object resting inside the box rather than a generic tile. Keyed by product
-// slug so it keeps working as long as the catalog slugs stay stable.
 const ITEM_SHAPE: Record<string, GiftShape> = {
   bottle: "bottle",
   mug: "mug",
@@ -85,10 +79,6 @@ function rectsCollide(ax: number, ay: number, aw: number, ah: number, bx: number
   return ax < bx + bw + GIFT_GAP && ax + aw + GIFT_GAP > bx && ay < by + bh + GIFT_GAP && ay + ah + GIFT_GAP > by;
 }
 
-// Searches the box for the open spot closest to where the user actually
-// dropped the item — this is the "rearrange themselves" behaviour: drop on
-// top of something else and the new gift settles into the nearest free space
-// instead of overlapping it. Returns null when nothing fits anywhere (no space).
 function findOpenSpot(
   w: number,
   h: number,
@@ -119,6 +109,31 @@ function findOpenSpot(
     }
   }
   return best;
+}
+
+function useIsTouchDevice() {
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
+  return isTouch;
+}
+
+function useBoxScale(containerRef: React.RefObject<HTMLDivElement | null>) {
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const available = el.clientWidth;
+      setScale(Math.min(1, available / (BOX_W + 24)));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [containerRef]);
+  return scale;
 }
 
 const STEPS = [
@@ -190,20 +205,21 @@ export default function BYOBPage() {
     <div className="min-h-screen bg-cream pt-24 pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-10 max-w-2xl">
+        <div className="mb-8 sm:mb-10 max-w-2xl">
           <p className="text-amber font-bold text-xs uppercase tracking-[0.2em] mb-2">Build Your Own Box</p>
-          <h1 className="text-4xl sm:text-5xl font-black text-[#1A1A1A] mb-3">Fill the Happiness</h1>
-          <p className="text-[#6B6B6B]">
-            Select premium items from our catalog and drag them into your custom gift box. Every box is hand-packed
-            with care.
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#1A1A1A] mb-3">Fill the Happiness</h1>
+          <p className="text-[#6B6B6B] text-sm sm:text-base">
+            <span className="hidden sm:inline">Select premium items from our catalog and drag them into your custom gift box.</span>
+            <span className="sm:hidden">Pick premium items and tap to fill your custom gift box.</span>
+            {" "}Every box is hand-packed with care.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start">
           {/* Main Builder Area */}
           <div>
-            {/* Step indicator (mobile-friendly horizontal) */}
-            <div className="flex items-center gap-1.5 sm:gap-3 mb-8">
+            {/* Step indicator */}
+            <div className="flex items-center gap-1.5 sm:gap-3 mb-6 sm:mb-8">
               {STEPS.map((step, idx) => {
                 const isActive = currentStep >= step.id;
                 const isCurrent = currentStep === step.id;
@@ -250,7 +266,7 @@ export default function BYOBPage() {
             {currentStep > 1 && (
               <button
                 onClick={prevStep}
-                className="mt-8 flex items-center gap-2 font-bold px-6 py-3 rounded-full text-gray-500 hover:bg-white transition-all"
+                className="mt-6 sm:mt-8 flex items-center gap-2 font-bold px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-gray-500 hover:bg-white transition-all text-sm sm:text-base"
               >
                 <ArrowLeft size={18} />
                 Back
@@ -260,11 +276,11 @@ export default function BYOBPage() {
 
           {/* Persistent Cart Sidebar */}
           <div className="lg:sticky lg:top-28">
-            <div className="bg-peach/40 border border-peach rounded-[28px] p-6 sm:p-7">
-              <h3 className="text-xl font-black text-amber mb-1">Your Custom Box</h3>
-              <p className="text-xs text-[#6B6B6B] font-semibold mb-6">{selection.items.length}/{MAX_ITEMS} Items Selected</p>
+            <div className="bg-peach/40 border border-peach rounded-[28px] p-5 sm:p-7">
+              <h3 className="text-lg sm:text-xl font-black text-amber mb-1">Your Custom Box</h3>
+              <p className="text-xs text-[#6B6B6B] font-semibold mb-4 sm:mb-6">{selection.items.length}/{MAX_ITEMS} Items Selected</p>
 
-              <div className="space-y-1 mb-6">
+              <div className="space-y-1 mb-4 sm:mb-6 hidden lg:block">
                 {STEPS.map((step) => {
                   const isCurrent = currentStep === step.id;
                   const Icon = step.icon;
@@ -284,17 +300,17 @@ export default function BYOBPage() {
               </div>
 
               {(selection.box || selection.items.length > 0) && (
-                <div className="space-y-2 mb-6 pt-2 border-t border-peach max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-2 mb-4 sm:mb-6 pt-2 border-t border-peach max-h-48 overflow-y-auto pr-1">
                   {selection.box && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-[#6B6B6B] truncate">{selection.box.name}</span>
-                      <span className="font-bold text-[#1A1A1A]">₹{selection.box.price}</span>
+                      <span className="font-bold text-[#1A1A1A] shrink-0 ml-2">₹{selection.box.price}</span>
                     </div>
                   )}
                   {selection.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs">
                       <span className="text-[#6B6B6B] truncate">{item.name}</span>
-                      <span className="font-bold text-[#1A1A1A]">₹{item.price}</span>
+                      <span className="font-bold text-[#1A1A1A] shrink-0 ml-2">₹{item.price}</span>
                     </div>
                   ))}
                 </div>
@@ -308,7 +324,7 @@ export default function BYOBPage() {
               <button
                 onClick={nextStep}
                 disabled={sidebarDisabled}
-                className="w-full flex items-center justify-center gap-2 bg-amber text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg shadow-amber/20 hover:bg-[#E67A00] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 bg-amber text-white font-bold px-6 py-3 sm:py-3.5 rounded-2xl shadow-lg shadow-amber/20 hover:bg-[#E67A00] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {sidebarLabel}
                 <ArrowRight size={18} />
@@ -331,13 +347,13 @@ function Step1BoxSelection({
   setSelection: React.Dispatch<React.SetStateAction<BYOBSelection>>;
 }) {
   return (
-    <div className="bg-white rounded-[32px] shadow-sm border border-peach/60 p-8 sm:p-10">
-      <div className="mb-8">
-        <h2 className="text-2xl font-black text-[#1A1A1A] mb-2">Choose Your Canvas</h2>
+    <div className="bg-white rounded-[24px] sm:rounded-[32px] shadow-sm border border-peach/60 p-5 sm:p-8 lg:p-10">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-2">Choose Your Canvas</h2>
         <p className="text-[#6B6B6B] text-sm">Pick a premium box style that suits the occasion.</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" style={{ perspective: 900 }}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6" style={{ perspective: 900 }}>
         {BOX_TYPES.map((box) => (
           <motion.div
             key={box.id}
@@ -350,7 +366,7 @@ function Step1BoxSelection({
             }}
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className={`cursor-pointer group relative rounded-3xl border-2 overflow-hidden ${
+            className={`cursor-pointer group relative rounded-2xl sm:rounded-3xl border-2 overflow-hidden ${
               selection.box?.id === box.id ? "border-amber bg-cream" : "border-gray-100 hover:border-golden"
             }`}
             style={{ transformStyle: "preserve-3d" }}
@@ -359,15 +375,15 @@ function Step1BoxSelection({
               <img src={box.image} alt={box.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
               {selection.box?.id === box.id && (
                 <div className="absolute inset-0 bg-amber/10 flex items-center justify-center">
-                  <div className="bg-amber text-white p-2 rounded-full shadow-lg">
-                    <Check size={24} />
+                  <div className="bg-amber text-white p-1.5 sm:p-2 rounded-full shadow-lg">
+                    <Check size={18} className="sm:w-6 sm:h-6" />
                   </div>
                 </div>
               )}
             </div>
-            <div className="p-5">
-              <p className="font-bold text-[#1A1A1A]">{box.name}</p>
-              <p className="text-amber font-black mt-1">₹{box.price}</p>
+            <div className="p-3 sm:p-5">
+              <p className="font-bold text-[#1A1A1A] text-xs sm:text-base truncate">{box.name}</p>
+              <p className="text-amber font-black mt-0.5 sm:mt-1 text-sm sm:text-base">₹{box.price}</p>
             </div>
           </motion.div>
         ))}
@@ -376,7 +392,7 @@ function Step1BoxSelection({
   );
 }
 
-// --- Step 2: Add Gifts (drag items into the box) ---
+// --- Step 2: Add Gifts ---
 
 function Step2AddGifts({
   selection,
@@ -385,17 +401,17 @@ function Step2AddGifts({
   selection: BYOBSelection;
   setSelection: React.Dispatch<React.SetStateAction<BYOBSelection>>;
 }) {
+  const isTouch = useIsTouchDevice();
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [isDragOver, setIsDragOver] = useState(false);
   const [showFullWarning, setShowFullWarning] = useState(false);
-  // Real x/y coordinates (px, relative to the box) where each gift currently rests
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
   const [loadingGifts, setLoadingGifts] = useState(true);
   const boxRef = useRef<HTMLDivElement>(null);
+  const scaleContainerRef = useRef<HTMLDivElement>(null);
+  const boxScale = useBoxScale(scaleContainerRef);
 
-  // Pull individual gifts straight from the live catalog — anything an admin
-  // tags "byob-gift" in /admin/products shows up here automatically.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -420,9 +436,7 @@ function Step2AddGifts({
       }
       setLoadingGifts(false);
     })();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   const categories = useMemo(() => {
@@ -442,15 +456,12 @@ function Step2AddGifts({
     [selection.items, positions]
   );
 
-  const flashFullWarning = () => {
+  const flashFullWarning = useCallback(() => {
     setShowFullWarning(true);
     setTimeout(() => setShowFullWarning(false), 1500);
-  };
+  }, []);
 
-  // Drops the gift at (or as close as possible to) the spot the user actually
-  // chose — landing exactly there if it's free, or settling into the nearest
-  // open space if something's already there. No space anywhere → error toast.
-  const placeItem = (item: GiftItem, desiredX?: number, desiredY?: number) => {
+  const placeItem = useCallback((item: GiftItem, desiredX?: number, desiredY?: number) => {
     if (selection.items.find((i) => i.id === item.id)) return;
     if (selection.items.length >= MAX_ITEMS) {
       toast.error("Box is full! Remove an item first.");
@@ -470,9 +481,9 @@ function Step2AddGifts({
     }
     setPositions((prev) => ({ ...prev, [item.id]: spot }));
     setSelection({ ...selection, items: [...selection.items, item] });
-  };
+  }, [selection, placedRects, flashFullWarning, setSelection]);
 
-  const repositionItem = (item: GiftItem, desiredX: number, desiredY: number) => {
+  const repositionItem = useCallback((item: GiftItem, desiredX: number, desiredY: number) => {
     const { w, h } = SHAPE_SIZE[shapeOf(item)];
     const clampedX = Math.min(Math.max(desiredX, BOX_PADDING), BOX_W - w - BOX_PADDING);
     const clampedY = Math.min(Math.max(desiredY, BOX_PADDING), BOX_H - h - BOX_PADDING);
@@ -483,21 +494,21 @@ function Step2AddGifts({
       return;
     }
     setPositions((prev) => ({ ...prev, [item.id]: spot }));
-  };
+  }, [placedRects]);
 
-  const removeItem = (id: string) => {
-    setSelection({ ...selection, items: selection.items.filter((i) => i.id !== id) });
+  const removeItem = useCallback((id: string) => {
+    setSelection((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== id) }));
     setPositions((prev) => {
       const next = { ...prev };
       delete next[id];
       return next;
     });
-  };
+  }, [setSelection]);
 
-  const toggleItem = (item: GiftItem) => {
+  const toggleItem = useCallback((item: GiftItem) => {
     if (selection.items.find((i) => i.id === item.id)) removeItem(item.id);
     else placeItem(item);
-  };
+  }, [selection.items, removeItem, placeItem]);
 
   const handleDragStart = (e: React.DragEvent, item: GiftItem) => {
     e.dataTransfer.setData("text/plain", item.id);
@@ -511,14 +522,10 @@ function Step2AddGifts({
     const item = giftItems.find((i) => i.id === id);
     if (!item) return;
     const box = boxRef.current?.getBoundingClientRect();
-    if (!box) {
-      placeItem(item);
-      return;
-    }
+    if (!box) { placeItem(item); return; }
     const { w, h } = SHAPE_SIZE[shapeOf(item)];
-    // Land the gift centred under the cursor — exactly where the user dropped it
-    const dropX = e.clientX - box.left - w / 2;
-    const dropY = e.clientY - box.top - h / 2;
+    const dropX = (e.clientX - box.left) / boxScale - w / 2;
+    const dropY = (e.clientY - box.top) / boxScale - h / 2;
     if (selection.items.find((i) => i.id === id)) {
       repositionItem(item, dropX, dropY);
       return;
@@ -526,57 +533,62 @@ function Step2AddGifts({
     placeItem(item, dropX, dropY);
   };
 
+  const scaledBoxH = BOX_H * boxScale;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
-      {/* Box drop zone — 2.5D isometric centerpiece */}
-      <div className="bg-white rounded-[32px] shadow-md shadow-amber/10 border-2 border-golden/40 p-6 sm:p-8 relative min-w-0">
-        <div className="flex items-center justify-between mb-5">
+    <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-[1fr_280px] lg:grid-cols-[1fr_300px] md:gap-5 lg:gap-6">
+      {/* Box drop zone — 2.5D isometric */}
+      <div className="bg-white rounded-[24px] sm:rounded-[32px] shadow-md shadow-amber/10 border-2 border-golden/40 p-4 sm:p-6 lg:p-8 relative min-w-0">
+        <div className="flex items-center justify-between mb-4 sm:mb-5">
           <div>
-            <h2 className="text-2xl font-black text-[#1A1A1A]">Your Gift Box</h2>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#6B6B6B] mt-1">Drag gifts here to fill it up</p>
+            <h2 className="text-lg sm:text-2xl font-black text-[#1A1A1A]">Your Gift Box</h2>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#6B6B6B] mt-0.5 sm:mt-1">
+              {isTouch ? "Tap gifts below to fill it up" : "Drag gifts here to fill it up"}
+            </p>
           </div>
-          <span className="text-xs font-bold text-amber bg-peach px-3 py-1.5 rounded-full whitespace-nowrap">
-            {selection.items.length}/{MAX_ITEMS} items
+          <span className="text-[10px] sm:text-xs font-bold text-amber bg-peach px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full whitespace-nowrap">
+            {selection.items.length}/{MAX_ITEMS}
           </span>
         </div>
 
-        {/* Perspective wrapper — clips 3D overflow */}
-        <div style={{ perspective: 1200 }} className="flex justify-center overflow-hidden rounded-[30px]">
+        {/* Responsive perspective wrapper */}
+        <div
+          ref={scaleContainerRef}
+          className="flex justify-center overflow-hidden rounded-[20px] sm:rounded-[30px]"
+          style={{ perspective: 1200, height: scaledBoxH }}
+        >
           <motion.div
             ref={boxRef}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
+            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
             animate={{
-              rotateX: isDragOver ? 20 : 25,
-              scale: isDragOver ? 1.02 : 1,
+              rotateX: isDragOver ? 16 : 20,
+              scale: (isDragOver ? 1.02 : 1) * boxScale,
             }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className={`relative rounded-[28px] border-2 border-dashed transition-colors duration-200 ${
+            className={`rounded-[28px] border-2 border-dashed transition-colors duration-200 origin-top ${
               isDragOver ? "border-amber bg-peach/50" : "border-golden bg-cream"
             }`}
             style={{
               width: BOX_W,
               height: BOX_H,
-              maxWidth: "100%",
+              position: "relative",
               transformStyle: "preserve-3d",
               boxShadow: isDragOver
                 ? "0 30px 60px -10px rgba(255, 138, 0, 0.25), inset 0 -8px 20px rgba(0,0,0,0.06)"
                 : "0 25px 50px -12px rgba(0,0,0,0.15), inset 0 -6px 16px rgba(0,0,0,0.04), inset 6px 0 12px rgba(0,0,0,0.02), inset -6px 0 12px rgba(0,0,0,0.02)",
             }}
           >
-            {/* Inner wall shadows for depth illusion */}
+            {/* Inner wall shadows */}
             <div className="absolute inset-0 rounded-[26px] pointer-events-none" style={{
               boxShadow: "inset 0 8px 16px rgba(0,0,0,0.08), inset 0 -2px 8px rgba(255,180,73,0.1)",
             }} />
 
             {selection.items.length === 0 && (
-              <p className="absolute inset-x-4 bottom-5 text-center text-xs text-[#6B6B6B] italic flex items-center justify-center gap-2">
+              <p className="absolute inset-x-4 bottom-5 text-center text-[10px] sm:text-xs text-[#6B6B6B] italic flex items-center justify-center gap-2">
                 <Package size={16} className="text-golden shrink-0" />
-                Drag a gift and drop it anywhere — it lands right where you place it
+                {isTouch ? "Tap a gift below to add it" : "Drag a gift here — it lands where you drop it"}
               </p>
             )}
 
@@ -601,10 +613,10 @@ function Step2AddGifts({
                     exit={{ opacity: 0, scale: 0.4, y: -40, rotateX: -20, transition: { duration: 0.15 } }}
                     transition={{ type: "spring", stiffness: 300, damping: 22 }}
                     whileHover={{ scale: 1.06 + depth * 0.01, y: -6, rotateX: -4 }}
-                    draggable
+                    draggable={!isTouch}
                     onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item)}
                     onClick={() => removeItem(item.id)}
-                    title="Drag to move • click to remove"
+                    title={isTouch ? "Tap to remove" : "Drag to move • click to remove"}
                     style={{
                       position: "absolute",
                       left: pos.x,
@@ -615,9 +627,9 @@ function Step2AddGifts({
                       transformStyle: "preserve-3d",
                       transform: `translateZ(${depth * 4}px)`,
                     }}
-                    className="cursor-grab active:cursor-grabbing group"
+                    className="cursor-pointer sm:cursor-grab sm:active:cursor-grabbing group"
                   >
-                    {/* Front face — the product image */}
+                    {/* Front face */}
                     <div
                       className={`absolute inset-0 overflow-hidden border-2 border-white ${SHAPE_RADIUS[shape]}`}
                       style={{
@@ -627,29 +639,33 @@ function Step2AddGifts({
                       }}
                     >
                       <img src={item.image} alt={item.name} className="w-full h-full object-cover" draggable={false} />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <span className="text-white text-[10px] font-bold">Drag to move • Click to remove</span>
+                      {/* Remove badge on mobile, hover overlay on desktop */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 sm:flex items-center justify-center transition-opacity hidden">
+                        <span className="text-white text-[10px] font-bold">Click to remove</span>
+                      </div>
+                      <div className="sm:hidden absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-md z-20">
+                        <X size={10} strokeWidth={3} />
                       </div>
                     </div>
-                    {/* Bottom edge — gives thickness */}
+                    {/* Bottom edge */}
                     <div
                       className={`absolute left-0 right-0 ${shape === "bottle" ? "rounded-b-2xl" : shape === "pen" ? "rounded-full" : "rounded-b-lg"}`}
                       style={{
                         bottom: 0,
                         height: thickness,
                         background: "linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.25))",
-                        transform: `rotateX(-90deg) translateZ(0px)`,
+                        transform: "rotateX(-90deg) translateZ(0px)",
                         transformOrigin: "bottom center",
                       }}
                     />
-                    {/* Right edge — gives side depth */}
+                    {/* Right edge */}
                     <div
                       className={`absolute top-0 bottom-0 ${shape === "bottle" ? "rounded-r-2xl" : shape === "pen" ? "rounded-full" : "rounded-r-lg"}`}
                       style={{
                         right: 0,
                         width: thickness,
                         background: "linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.2))",
-                        transform: `rotateY(90deg) translateZ(0px)`,
+                        transform: "rotateY(90deg) translateZ(0px)",
                         transformOrigin: "right center",
                       }}
                     />
@@ -664,7 +680,7 @@ function Step2AddGifts({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 whitespace-nowrap z-10"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 whitespace-nowrap z-50"
                 >
                   <AlertCircle size={14} />
                   No space left in the box!
@@ -675,15 +691,15 @@ function Step2AddGifts({
         </div>
       </div>
 
-      {/* Individual gifts panel — subtle 3D hover */}
-      <div className="bg-white rounded-[28px] shadow-sm border border-peach/60 p-5 sm:p-6">
-        <h3 className="text-lg font-black text-[#1A1A1A] mb-4">Individual Gifts</h3>
-        <div className="flex flex-wrap gap-2 mb-5">
+      {/* Individual gifts panel */}
+      <div className="bg-white rounded-[24px] sm:rounded-[28px] shadow-sm border border-peach/60 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-black text-[#1A1A1A] mb-3 sm:mb-4">Individual Gifts</h3>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-5">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold capitalize transition-all ${
+              className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold capitalize transition-all ${
                 activeCategory === cat ? "bg-amber text-white" : "bg-cream text-[#6B6B6B] hover:bg-peach"
               }`}
             >
@@ -693,46 +709,62 @@ function Step2AddGifts({
         </div>
 
         {loadingGifts ? (
-          <p className="text-sm text-[#6B6B6B] italic py-8 text-center">Loading gifts from the catalog…</p>
+          <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 sm:gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-cream animate-pulse aspect-square" />
+            ))}
+          </div>
         ) : visibleItems.length === 0 ? (
           <p className="text-sm text-[#6B6B6B] italic py-8 text-center">No gifts available in this category yet.</p>
         ) : (
-        <div className="grid grid-cols-2 gap-3 max-h-[480px] overflow-y-auto pr-1" style={{ perspective: 800 }}>
+        <div
+          className="grid grid-cols-3 sm:grid-cols-2 gap-2 sm:gap-3 max-h-[320px] sm:max-h-[480px] overflow-y-auto pr-1"
+          style={{ perspective: 800 }}
+        >
           {visibleItems.map((item) => {
             const isSelected = !!selection.items.find((i) => i.id === item.id);
             return (
               <motion.div
                 key={item.id}
-                draggable
+                draggable={!isTouch}
                 onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, item)}
                 onClick={() => toggleItem(item)}
-                whileHover={{
+                whileHover={isTouch ? {} : {
                   rotateY: -4,
                   rotateX: 2,
                   scale: 1.03,
                   boxShadow: "0 12px 24px rgba(0,0,0,0.12)",
                 }}
+                whileTap={{ scale: 0.96 }}
                 animate={isSelected ? {
                   y: [0, -3, 0],
                   transition: { repeat: Infinity, duration: 2.5, ease: "easeInOut" },
                 } : { y: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className={`cursor-grab active:cursor-grabbing group relative rounded-2xl border-2 transition-colors duration-300 overflow-hidden ${
+                className={`relative rounded-xl sm:rounded-2xl border-2 transition-colors duration-300 overflow-hidden ${
+                  isTouch ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
+                } ${
                   isSelected ? "border-amber bg-cream" : "border-gray-100 hover:border-golden"
                 }`}
                 style={{ transformStyle: "preserve-3d" }}
               >
                 <div className="aspect-square relative">
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" draggable={false} />
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 bg-amber text-white p-1 rounded-full shadow-lg">
-                      <Check size={14} />
+                  {isSelected ? (
+                    <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-amber text-white p-0.5 sm:p-1 rounded-full shadow-lg">
+                      <Check size={12} className="sm:w-3.5 sm:h-3.5" />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/5 transition-colors flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 bg-amber text-white p-1.5 rounded-full shadow-lg transition-opacity">
+                        <Plus size={14} />
+                      </div>
                     </div>
                   )}
                 </div>
-                <div className="p-2.5 text-center">
-                  <p className="font-bold text-xs text-[#1A1A1A] truncate">{item.name}</p>
-                  <p className="text-amber text-xs font-black mt-0.5">₹{item.price}</p>
+                <div className="p-1.5 sm:p-2.5 text-center">
+                  <p className="font-bold text-[10px] sm:text-xs text-[#1A1A1A] truncate">{item.name}</p>
+                  <p className="text-amber text-[10px] sm:text-xs font-black mt-0.5">₹{item.price}</p>
                 </div>
               </motion.div>
             );
@@ -754,26 +786,27 @@ function Step3Personalize({
   setSelection: React.Dispatch<React.SetStateAction<BYOBSelection>>;
 }) {
   return (
-    <div className="bg-white rounded-[32px] shadow-sm border border-peach/60 p-5 sm:p-8 lg:p-10 space-y-8 sm:space-y-10">
+    <div className="bg-white rounded-[24px] sm:rounded-[32px] shadow-sm border border-peach/60 p-5 sm:p-8 lg:p-10 space-y-6 sm:space-y-10">
       <div>
         <h2 className="text-xl sm:text-2xl font-black text-[#1A1A1A] mb-2">The Personal Touch</h2>
         <p className="text-[#6B6B6B] text-sm">Choose a card and write a message for your recipient.</p>
       </div>
 
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-5 sm:space-y-8">
         <div>
           <label className="block text-xs font-bold text-[#1A1A1A] mb-3 sm:mb-4 uppercase tracking-widest">Select a Card</label>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {["Birthday", "Anniversary", "General"].map((card) => (
-              <div
+              <motion.div
                 key={card}
                 onClick={() => setSelection({ ...selection, card })}
-                className={`cursor-pointer py-3 sm:py-4 px-1.5 sm:px-6 rounded-2xl border-2 text-center font-bold text-xs sm:text-sm transition-all ${
+                whileTap={{ scale: 0.95 }}
+                className={`cursor-pointer py-3 sm:py-4 px-1.5 sm:px-6 rounded-xl sm:rounded-2xl border-2 text-center font-bold text-xs sm:text-sm transition-all ${
                   selection.card === card ? "bg-amber border-amber text-white" : "border-gray-100 text-[#6B6B6B] hover:border-golden"
                 }`}
               >
                 {card}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -784,45 +817,45 @@ function Step3Personalize({
             value={selection.message}
             onChange={(e) => setSelection({ ...selection, message: e.target.value })}
             placeholder="Type your heartfelt message here..."
-            className="w-full h-36 p-4 sm:p-6 rounded-3xl bg-cream border-none focus:ring-2 focus:ring-amber text-[#1A1A1A] placeholder:text-gray-400"
+            className="w-full h-28 sm:h-36 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-cream border-none focus:ring-2 focus:ring-amber text-[#1A1A1A] placeholder:text-gray-400 text-sm sm:text-base resize-none"
           />
         </div>
       </div>
 
-      <div className="pt-6 sm:pt-8 border-t border-peach">
-        <div className="flex items-center gap-3 mb-5 sm:mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-peach flex items-center justify-center text-amber shrink-0">
-            <Sparkles size={22} />
+      <div className="pt-5 sm:pt-8 border-t border-peach">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-peach flex items-center justify-center text-amber shrink-0">
+            <Sparkles size={20} className="sm:w-[22px] sm:h-[22px]" />
           </div>
           <div>
-            <p className="text-xs text-[#6B6B6B] uppercase font-bold tracking-widest">Review</p>
-            <h3 className="font-black text-[#1A1A1A]">Your Hamper Summary</h3>
+            <p className="text-[10px] sm:text-xs text-[#6B6B6B] uppercase font-bold tracking-widest">Review</p>
+            <h3 className="font-black text-[#1A1A1A] text-sm sm:text-base">Your Hamper Summary</h3>
           </div>
         </div>
 
-        <div className="bg-cream rounded-3xl p-4 sm:p-6 space-y-4">
-          <div className="flex items-center justify-between text-sm">
+        <div className="bg-cream rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-[#6B6B6B]">Selected Box</span>
             <span className="font-bold text-[#1A1A1A]">{selection.box?.name ?? "—"}</span>
           </div>
           <div>
-            <p className="text-xs text-[#6B6B6B] uppercase font-bold tracking-widest mb-3">
+            <p className="text-[10px] sm:text-xs text-[#6B6B6B] uppercase font-bold tracking-widest mb-2 sm:mb-3">
               Included Items ({selection.items.length})
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {selection.items.map((item, idx) => (
-                <span key={idx} className="bg-white px-3 py-1.5 rounded-full text-xs font-bold text-[#6B6B6B] border border-gray-100">
+                <span key={idx} className="bg-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold text-[#6B6B6B] border border-gray-100">
                   {item.name}
                 </span>
               ))}
             </div>
           </div>
           {selection.card && (
-            <div className="pt-4 border-t border-peach">
-              <p className="text-xs text-[#6B6B6B] uppercase font-bold tracking-widest mb-2">
+            <div className="pt-3 sm:pt-4 border-t border-peach">
+              <p className="text-[10px] sm:text-xs text-[#6B6B6B] uppercase font-bold tracking-widest mb-1.5 sm:mb-2">
                 Personal Message ({selection.card})
               </p>
-              <p className="text-sm text-[#6B6B6B] italic">"{selection.message || "No message provided"}"</p>
+              <p className="text-xs sm:text-sm text-[#6B6B6B] italic">&ldquo;{selection.message || "No message provided"}&rdquo;</p>
             </div>
           )}
         </div>

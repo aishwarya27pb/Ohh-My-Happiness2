@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { env } from "@/env";
 
 export async function GET() {
+  if (process.env.NODE_ENV === "production") {
+    return new Response("Forbidden", { status: 403 });
+  }
   const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY;
 

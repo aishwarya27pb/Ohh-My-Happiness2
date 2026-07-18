@@ -9,6 +9,7 @@ import HowItWorks from "@/components/home/HowItWorks";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { productsService } from "@/lib/services/products.service";
+import ScrollExpandMedia from "@/components/ui/scroll-expansion-hero";
 
 export const metadata: Metadata = {
   title: "Ohh My Happiness — Premium Corporate & Personal Gifting",
@@ -22,13 +23,20 @@ export default async function HomePage() {
     <>
       <Header />
       <main className="flex-1">
-        <Hero />
-        <CategoryGrid />
-        <BestsellerSection products={products} />
-        <CorporateBanner />
-        <FeaturedProducts products={products} />
-        <HowItWorks />
-        <TestimonialSlider />
+        <ScrollExpandMedia
+          bgImageSrc="/gifting_bg_pattern.png"
+          title="Ohh My Happiness"
+          subtitle="Unwrap Premium Luxury Gifting"
+          scrollToExpand="Scroll to unwrap happiness"
+        >
+          <Hero />
+          <CategoryGrid />
+          <BestsellerSection products={products} />
+          <CorporateBanner />
+          <FeaturedProducts products={products} />
+          <HowItWorks />
+          <TestimonialSlider />
+        </ScrollExpandMedia>
       </main>
       <Footer />
     </>

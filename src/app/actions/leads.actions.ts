@@ -3,6 +3,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createLead, updateLeadStatus, updateLeadNotes } from "@/lib/services/leads.service";
 import type { LeadStatus } from "@/lib/supabase/types";
+import { headers } from "next/headers";
+import { RateLimiter } from "@/lib/rate-limit";
+
+const actionLimiter = new RateLimiter({
+  limit: 10,
+  windowMs: 60 * 1000,
+});
 
 export interface CustomOrderFormData {
   name: string;
@@ -22,6 +29,13 @@ export async function createLeadAction(
   form: CustomOrderFormData
 ): Promise<{ error?: string }> {
   try {
+    const headerList = await headers();
+    const ip = headerList.get("x-forwarded-for") || "anonymous";
+    const rateLimit = actionLimiter.check(`lead_${ip}`);
+    if (!rateLimit.success) {
+      return { error: "Too Many Requests. Please try again later." };
+    }
+
     const supabase = await createClient();
     const {
       data: { user },

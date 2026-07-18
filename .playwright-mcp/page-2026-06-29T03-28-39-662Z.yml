@@ -1,0 +1,199 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "Ohh My Happiness" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "Ohh My Happiness" [ref=e7]
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - button "Search" [ref=e10]:
+            - img [ref=e11]
+          - generic: Search
+        - generic [ref=e14]:
+          - link [ref=e15] [cursor=pointer]:
+            - /url: /wishlist
+            - img [ref=e16]
+          - generic: Wishlist
+        - generic [ref=e18]:
+          - button "Cart" [ref=e19]:
+            - img [ref=e20]
+            - generic [ref=e24]: "2"
+          - generic: Cart · 2 items
+        - button "Menu" [ref=e25]:
+          - img [ref=e26]
+  - main [ref=e27]:
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - paragraph [ref=e32]: Build Your Own Box
+        - heading "Fill the Happiness" [level=1] [ref=e33]
+        - paragraph [ref=e34]: Select premium items from our catalog and drag them into your custom gift box. Every box is hand-packed with care.
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - button "1" [ref=e38]:
+              - generic [ref=e39]: "1"
+            - button "2" [ref=e41]:
+              - generic [ref=e42]: "2"
+            - button "3" [ref=e44]:
+              - generic [ref=e45]: "3"
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - heading "Choose Your Canvas" [level=2] [ref=e49]
+              - paragraph [ref=e50]: Pick a premium box style that suits the occasion.
+            - generic [ref=e51]:
+              - generic [active] [ref=e52] [cursor=pointer]:
+                - generic [ref=e53]:
+                  - img "Luxury Wooden Box" [ref=e54]
+                  - img [ref=e204]
+                - generic [ref=e55]:
+                  - paragraph [ref=e56]: Luxury Wooden Box
+                  - paragraph [ref=e57]: ₹500
+              - generic [ref=e58] [cursor=pointer]:
+                - img "Classic Pink Box" [ref=e60]
+                - generic [ref=e61]:
+                  - paragraph [ref=e62]: Classic Pink Box
+                  - paragraph [ref=e63]: ₹300
+              - generic [ref=e64] [cursor=pointer]:
+                - img "Eco-Friendly Kraft" [ref=e66]
+                - generic [ref=e67]:
+                  - paragraph [ref=e68]: Eco-Friendly Kraft
+                  - paragraph [ref=e69]: ₹200
+        - generic [ref=e71]:
+          - heading "Your Custom Box" [level=3] [ref=e72]
+          - paragraph [ref=e73]: 0/6 Items Selected
+          - generic [ref=e74]:
+            - button "Select Box" [ref=e75]:
+              - img [ref=e76]
+              - text: Select Box
+            - button "Add Gifts" [ref=e80]:
+              - img [ref=e81]
+              - text: Add Gifts
+            - button "Personalize" [ref=e85]:
+              - img [ref=e86]
+              - text: Personalize
+          - generic [ref=e207]:
+            - generic [ref=e208]: Luxury Wooden Box
+            - generic [ref=e209]: ₹500
+          - generic [ref=e88]:
+            - img [ref=e89]
+            - text: "Subtotal:"
+            - generic [ref=e92]: ₹500
+          - button "Continue" [ref=e93]:
+            - text: Continue
+            - img [ref=e94]
+  - contentinfo [ref=e96]:
+    - generic [ref=e98]:
+      - heading "Ready to Make Someone Happy?" [level=2] [ref=e99]
+      - paragraph [ref=e100]: "\"Your requirement is our responsibility.\" — Let us handle every gifting need."
+      - generic [ref=e101]:
+        - link "Shop Now" [ref=e102] [cursor=pointer]:
+          - /url: /store
+        - link "Get Bulk Quote" [ref=e103] [cursor=pointer]:
+          - /url: /custom-orders
+    - generic [ref=e105]:
+      - generic [ref=e106]:
+        - link "Ohh My Happiness Ohh My Happiness Your requirement is our responsibility." [ref=e107] [cursor=pointer]:
+          - /url: /
+          - img "Ohh My Happiness" [ref=e109]
+          - generic [ref=e110]:
+            - paragraph [ref=e111]: Ohh My Happiness
+            - paragraph [ref=e112]: Your requirement is our responsibility.
+        - paragraph [ref=e113]: India's most trusted gifting brand. Bringing joy, warmth, and smiles through thoughtfully curated gifts for every occasion.
+        - generic [ref=e114]:
+          - link "IG" [ref=e115] [cursor=pointer]:
+            - /url: "#"
+          - link "FB" [ref=e116] [cursor=pointer]:
+            - /url: "#"
+          - link "TW" [ref=e117] [cursor=pointer]:
+            - /url: "#"
+          - link "YT" [ref=e118] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e119]:
+        - heading "Quick Links" [level=4] [ref=e120]
+        - list [ref=e121]:
+          - listitem [ref=e122]:
+            - link "Home" [ref=e123] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e124]:
+            - link "Corporate Gifting" [ref=e125] [cursor=pointer]:
+              - /url: /corporate-gifting
+          - listitem [ref=e126]:
+            - link "Personal Gifting" [ref=e127] [cursor=pointer]:
+              - /url: /personal-gifting
+          - listitem [ref=e128]:
+            - link "Store" [ref=e129] [cursor=pointer]:
+              - /url: /store
+          - listitem [ref=e130]:
+            - link "Custom Orders" [ref=e131] [cursor=pointer]:
+              - /url: /custom-orders
+          - listitem [ref=e132]:
+            - link "About Us" [ref=e133] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=e134]:
+            - link "Blog" [ref=e135] [cursor=pointer]:
+              - /url: /blog
+      - generic [ref=e136]:
+        - heading "Gift Categories" [level=4] [ref=e137]
+        - list [ref=e138]:
+          - listitem [ref=e139]:
+            - link "Corporate Hampers" [ref=e140] [cursor=pointer]:
+              - /url: /store?category=corporate-hampers
+          - listitem [ref=e141]:
+            - link "Festival Gifts" [ref=e142] [cursor=pointer]:
+              - /url: /store?category=festival-gifts
+          - listitem [ref=e143]:
+            - link "Personalized Gifts" [ref=e144] [cursor=pointer]:
+              - /url: /store?category=personalized-gifts
+          - listitem [ref=e145]:
+            - link "Luxury Collections" [ref=e146] [cursor=pointer]:
+              - /url: /store?category=luxury-collections
+          - listitem [ref=e147]:
+            - link "Wellness Kits" [ref=e148] [cursor=pointer]:
+              - /url: /store?category=wellness-kits
+          - listitem [ref=e149]:
+            - link "Onboarding Kits" [ref=e150] [cursor=pointer]:
+              - /url: /store?category=onboarding-kits
+          - listitem [ref=e151]:
+            - link "Bestsellers" [ref=e152] [cursor=pointer]:
+              - /url: /store?filter=bestseller
+      - generic [ref=e153]:
+        - heading "Contact Us" [level=4] [ref=e154]
+        - list [ref=e155]:
+          - listitem [ref=e156]:
+            - img [ref=e157]
+            - generic [ref=e159]:
+              - paragraph [ref=e160]: +91 99999 99999
+              - paragraph [ref=e161]: Mon–Sat, 9am–7pm
+          - listitem [ref=e162]:
+            - img [ref=e163]
+            - link "hello@ohhmyhappiness.com" [ref=e166] [cursor=pointer]:
+              - /url: mailto:hello@ohhmyhappiness.com
+          - listitem [ref=e167]:
+            - img [ref=e168]
+            - paragraph [ref=e171]:
+              - text: Mumbai, Maharashtra
+              - text: India — 400001
+        - generic [ref=e172]:
+          - paragraph [ref=e173]: Subscribe to our newsletter
+          - generic [ref=e174]:
+            - textbox "your@email.com" [ref=e175]
+            - button "Join" [ref=e176]
+    - generic [ref=e178]:
+      - paragraph [ref=e179]: © 2026 Ohh My Happiness. All rights reserved.
+      - generic [ref=e180]:
+        - link "Privacy Policy" [ref=e181] [cursor=pointer]:
+          - /url: /privacy
+        - link "Terms of Service" [ref=e182] [cursor=pointer]:
+          - /url: /terms
+        - link "Refund Policy" [ref=e183] [cursor=pointer]:
+          - /url: /refund
+      - generic [ref=e184]:
+        - generic [ref=e185]: visa
+        - generic [ref=e186]: mastercard
+        - generic [ref=e187]: upi
+        - generic [ref=e188]: razorpay
+  - button "Open chat" [ref=e189]:
+    - img [ref=e190]
+  - button "Open Next.js Dev Tools" [ref=e197] [cursor=pointer]:
+    - img [ref=e198]
+  - alert [ref=e201]

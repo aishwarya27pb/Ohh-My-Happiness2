@@ -1,9 +1,10 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, verifyAdmin } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function createProductAction(product: any) {
+  await verifyAdmin();
   const supabase = await createAdminClient();
   const { data, error } = await supabase
     .from("products")
@@ -23,6 +24,7 @@ export async function createProductAction(product: any) {
 }
 
 export async function updateProductAction(id: string, updates: any, slug?: string) {
+  await verifyAdmin();
   const supabase = await createAdminClient();
   const { data, error } = await supabase
     .from("products")
@@ -46,7 +48,9 @@ export async function updateProductAction(id: string, updates: any, slug?: strin
 }
 
 export async function deleteProductAction(id: string, slug?: string) {
+  await verifyAdmin();
   const supabase = await createAdminClient();
+
   const { error } = await supabase
     .from("products")
     .delete()

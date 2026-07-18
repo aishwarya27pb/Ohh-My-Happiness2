@@ -4,6 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createOrder, updateOrderStatus } from "@/lib/services/orders.service";
 import type { CartItemParam } from "@/lib/services/orders.service";
 import type { OrderStatus } from "@/lib/supabase/types";
+import { headers } from "next/headers";
+import { RateLimiter } from "@/lib/rate-limit";
+
+const actionLimiter = new RateLimiter({
+  limit: 10,
+  windowMs: 60 * 1000,
+});
 
 export interface CheckoutFormData {
   firstName: string;
@@ -31,10 +38,49 @@ export async function createOrderAction(
   form: CheckoutFormData,
   pricing: PricingData
 ): Promise<{ orderNumber: string; orderId: string }> {
+  const headerList = await headers();
+  const ip = headerList.get("x-forwarded-for") || "anonymous";
+  const rateLimit = actionLimiter.check(`order_${ip}`);
+  if (!rateLimit.success) {
+    throw new Error("Too Many Requests. Please try again later.");
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Validate pricing server-side
+  const productIds = cartItems.map(item => item.product.id);
+  const { data: dbProducts, error: dbError } = await supabase
+    .from("products")
+    .select("id, price")
+    .in("id", productIds);
+
+  if (dbError || !dbProducts) {
+    throw new Error("Failed to validate products");
+  }
+
+  let calculatedSubtotal = 0;
+  for (const item of cartItems) {
+    const dbProduct = dbProducts.find(p => p.id === item.product.id);
+    if (!dbProduct) {
+      throw new Error(`Product not found: ${item.product.name}`);
+    }
+    if (item.product.price !== dbProduct.price) {
+      throw new Error(`Price mismatch for product ${item.product.name}`);
+    }
+    calculatedSubtotal += dbProduct.price * item.quantity;
+  }
+
+  if (calculatedSubtotal !== pricing.subtotal) {
+    throw new Error("Subtotal discrepancy detected.");
+  }
+
+  const calculatedTotal = calculatedSubtotal + pricing.shipping - pricing.discount;
+  if (calculatedTotal !== pricing.total) {
+    throw new Error("Total discrepancy detected.");
+  }
 
   const result = await createOrder({
     cartItems,
@@ -50,10 +96,10 @@ export async function createOrderAction(
     },
     paymentMethod: form.paymentMethod,
     giftMessage: form.giftMessage,
-    subtotal: pricing.subtotal,
+    subtotal: calculatedSubtotal,
     shipping: pricing.shipping,
     discount: pricing.discount,
-    total: pricing.total,
+    total: calculatedTotal,
     couponCode: pricing.couponCode,
   });
 

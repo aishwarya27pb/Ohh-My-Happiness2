@@ -1,6 +1,6 @@
 # Hand-off Document — Ohh My Happiness (Next.js Storefront)
 
-**Date:** 2026-06-28 (updated)
+**Date:** 2026-07-05 (updated)
 **Purpose:** Context transfer for continuing work in another LLM/IDE session.
 
 ---
@@ -73,32 +73,58 @@ A comprehensive audit was performed and written to **`AUDIT_REPORT.md`** at repo
 
 ---
 
-## 4. CURRENT/NEXT TASK — BYOB 2D → 3D Conversion
+## 4. COMPLETED — BYOB 2.5D Isometric Builder
 
-**User request:** Convert the "Build Your Own Box" drag-and-drop builder from 2D to a more impressive 3D experience for clients, while staying user-friendly.
+**Status: DONE.** `src/app/(store)/byob/page.tsx` fully rewritten. Verified on desktop, tablet (768px), mobile (390px) via Playwright.
 
-**Current implementation:** `src/app/(store)/byob/page.tsx` (733 lines)
-- Step 2 component (lines ~364-552): native HTML5 drag-and-drop (`draggable`, `onDragStart`, `onDrop`, `onDragOver`/`onDragLeave`).
-- Items are absolutely positioned via a `positions` state map: `Record<string, { x: number; y: number }>` (line 377).
-- `placeItem`/`repositionItem` (lines ~435-484) compute drop coordinates relative to the box bounding rect and "settle" items into place.
-- All product visuals are currently **emoji placeholders** — `Product.images` is a string array but no real image/3D assets exist (per CLAUDE.md "Images" section).
-- No 3D libraries (`three`, `@react-three/fiber`, `@react-three/drei`, `@react-three/cannon`) are installed. `framer-motion` IS installed but unused; `react-hot-toast` installed but unused.
+### What was built
+- **Isometric box** — CSS `perspective(1200px)` + `rotateX(20°)` tilt, spring-animates on drag-over (tilts to 16°, scales 1.02×). Inner wall shadow layers simulate box depth.
+- **3D block items** — placed gifts have a front face (`translateZ(5px)`), bottom edge, and right edge (dark gradient strips rotated via `rotateX(-90deg)`/`rotateY(90deg)`) giving physical thickness. Each item gets `rotateX(-8°)` + progressive `translateZ(depth * 4px)` + stronger shadow per insertion depth.
+- **ResizeObserver scaling** (`useBoxScale` hook) — box always fits container width at any breakpoint, no hacky CSS scale hacks. Drop coordinates divided by scale factor so placement stays accurate.
+- **Touch detection** (`useIsTouchDevice`) — labels switch "Drag" → "Tap", catalog `draggable={false}` on touch, red X badges on placed items (mobile remove affordance), 3D hover disabled on touch devices.
+- **Collision/placement** — `findOpenSpot` with `BOX_PADDING=12`, `GIFT_GAP=6`, `STEP=8` (finer than original 14). Auto-settles dropped item to nearest free spot. Toast errors on "box full" and "no space".
+- **Catalog panel** — 3-col grid on mobile, 2-col on tablet+. Loading skeleton (animated pulse). `framer-motion` hover tilt + selected-item float animation.
+- **Step 1 box cards** — 2-col on mobile, 3-col on sm+. 3D tilt hover via framer-motion.
+- **Step 3 personalize** — fully responsive, all text/spacing scale per breakpoint. `resize-none` on textarea.
 
-**Recommendation already given to user (pending their decision on direction):**
+### Key constants (in `page.tsx`)
+```ts
+const BOX_W = 380;      // logical coordinate space — never change without updating findOpenSpot
+const BOX_H = 440;
+const BOX_PADDING = 12; // item keepout from box edges
+const GIFT_GAP = 6;     // min gap between placed items
+```
 
-| Option | Description | Effort | Asset requirement |
-|---|---|---|---|
-| **A. 2.5D CSS-transform isometric** (recommended first step) | Tilt the box container with CSS `perspective`/`rotateX`, add drop-shadows + layered z-index/depth as items are placed, animate placement with `framer-motion` (already installed). Keep existing drag logic mostly intact. | Low — few days, no new deps | Works fine with current emoji placeholders |
-| **B. True 3D** (react-three-fiber + drei + @react-three/cannon) | Real 3D scene, rotatable box, items physically drop/settle with physics. Most "wow" factor. | High — new ~200KB+ dep chain, full rewrite of drag interaction into 3D raycasting | Needs real 3D models or textured sprites per product — current emoji placeholders won't look good in a 3D scene |
-
-**Status:** No implementation started. User has NOT yet picked A vs. B — last assistant message asked "Want me to start on the 2.5D isometric version?" and the user instead asked for this hand-off doc, so **the decision is still open**. The next session should either get the user's choice or default to Option A (2.5D) as the pragmatic recommendation, given the lack of 3D assets.
+### Known limitation
+`overflow: hidden` doesn't clip `preserve-3d` children — clipping is on the perspective wrapper (parent div), not the tilted box itself. Works correctly.
 
 ---
 
-## 5. Environment Notes
+## 5. NEXT OPEN TASK — Connectors Lead Access
 
-- Dev server may already be running in background from a prior session (`npm run dev > /tmp/omh-dev.log 2>&1 &`). Check `lsof -i :3000` before starting another.
-- `.gitignore` correctly excludes `.env*`; no secrets committed (verified via `git ls-files`).
-- Current branch: `master`. Uncommitted files as of 2026-06-28: `.claude/settings.json` (modified), `AUDIT_REPORT.md` (untracked), `HANDOFF.md` (untracked). No uncommitted code changes — BYOB page was NOT modified for 3D.
-- Latest commit: `4a35b55 made website responsive`.
+**User request (interrupted, not yet implemented):** "let connectors also have access to add leads"
+
+**Context:** The current leads system:
+- `src/app/actions/leads.actions.ts` → `createLeadAction` — uses `createServiceClient()` (service-role), no auth check. Anyone can call it (security issue from audit).
+- `src/app/actions/admin/leads.actions.ts` → `updateLeadStatusAction`, `updateLeadNotesAction` — admin-only mutations, also unprotected.
+- `src/lib/services/leads.service.ts` — `createLead`, `getLeadById`, etc. via service-role client.
+- Supabase `profiles` table has `role` column: `customer` | `admin`. No `connector` role exists yet.
+
+**What "connectors" means:** Likely a new user role (`connector`) who can submit leads on behalf of clients (referral/partner model) but cannot access the admin panel or manage other leads. Needs:
+1. Add `connector` to the `profiles.role` enum in Supabase schema and regenerate types (`npx supabase gen types typescript --project-id siotvawafzrxnchssebk > src/lib/supabase/types.ts`)
+2. A UI for connectors to submit leads (either reuse the `/custom-orders` form or a dedicated `/connector` page)
+3. Auth gate in `createLeadAction` that allows `role === 'admin' OR role === 'connector'` (or allow unauthenticated for public lead forms — clarify with user)
+4. Optionally: connectors can view their own submitted leads (`getLeadsByConnector`)
+
+**Status: NOT STARTED.** Clarify with user: should connectors be registered users with a `connector` role, or is this about allowing the public custom-orders form to submit leads without auth?
+
+---
+
+## 6. Environment Notes
+
+- Dev server: `npm run dev` (port 3000). Check `lsof -i :3000` before starting another instance.
+- `.gitignore` correctly excludes `.env*`; no secrets committed.
+- Current branch: `master`. Uncommitted: `.claude/settings.json` (modified), `src/app/(store)/byob/page.tsx` (modified — the 2.5D rewrite, **not yet committed**). `AUDIT_REPORT.md` and `HANDOFF.md` are untracked.
+- Latest commits: `107683a built 2.5d byob`, `4a35b55 made website responsive`.
+- `.playwright-mcp/` directory has untracked Playwright session logs — safe to ignore or delete.
 - No test runner configured. Playwright E2E specs exist at `tests/e2e/specs/` but not wired into CI.

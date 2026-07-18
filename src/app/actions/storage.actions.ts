@@ -1,8 +1,9 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/server";
+import { createAdminClient, verifyAdmin } from "@/lib/supabase/server";
 
 export async function uploadProductImage(formData: FormData) {
+  await verifyAdmin();
   const supabase = await createAdminClient();
   const file = formData.get("file") as File;
 

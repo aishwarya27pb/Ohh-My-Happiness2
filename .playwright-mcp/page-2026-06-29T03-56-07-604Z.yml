@@ -1,0 +1,266 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e4]:
+      - link "Ohh My Happiness" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img "Ohh My Happiness" [ref=e7]
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - button "Search" [ref=e10]:
+            - img [ref=e11]
+          - generic: Search
+        - generic [ref=e14]:
+          - link [ref=e15] [cursor=pointer]:
+            - /url: /wishlist
+            - img [ref=e16]
+          - generic: Wishlist
+        - generic [ref=e18]:
+          - button "Cart" [ref=e19]:
+            - img [ref=e20]
+            - generic [ref=e24]: "2"
+          - generic: Cart · 2 items
+        - button "Menu" [ref=e25]:
+          - img [ref=e26]
+  - main [ref=e27]:
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - paragraph [ref=e32]: Build Your Own Box
+        - heading "Fill the Happiness" [level=1] [ref=e33]
+        - paragraph [ref=e34]: Pick premium items and tap to fill your custom gift box. Every box is hand-packed with care.
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - button [ref=e196]:
+              - img [ref=e197]
+            - button "2" [ref=e41]:
+              - generic [ref=e42]: "2"
+            - button "3" [ref=e44]:
+              - generic [ref=e45]: "3"
+          - generic [ref=e200]:
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - heading "Your Gift Box" [level=2] [ref=e204]
+                  - paragraph [ref=e205]: Drag gifts here to fill it up
+                - generic [ref=e206]: 1/6
+              - generic "Drag to move • click to remove" [ref=e322] [cursor=pointer]:
+                - generic [ref=e323]:
+                  - img "Assorted Chocolates" [ref=e324]
+                  - img [ref=e326]
+            - generic [ref=e215]:
+              - heading "Individual Gifts" [level=3] [ref=e216]
+              - generic [ref=e217]:
+                - button "All Items" [ref=e218]
+                - button "treats" [ref=e219]
+                - button "drinkware" [ref=e220]
+                - button "wellness" [ref=e221]
+                - button "stationery" [ref=e222]
+                - button "accessories" [ref=e223]
+                - button "home" [ref=e224]
+              - generic [ref=e225]:
+                - generic [active] [ref=e226]:
+                  - generic [ref=e227]:
+                    - img "Assorted Chocolates" [ref=e228]
+                    - img [ref=e330]
+                  - generic [ref=e232]:
+                    - paragraph [ref=e233]: Assorted Chocolates
+                    - paragraph [ref=e234]: ₹349
+                - generic [ref=e235]:
+                  - generic [ref=e236]:
+                    - img "Ceramic Mug" [ref=e237]
+                    - img [ref=e240]
+                  - generic [ref=e241]:
+                    - paragraph [ref=e242]: Ceramic Mug
+                    - paragraph [ref=e243]: ₹249
+                - generic [ref=e244]:
+                  - generic [ref=e245]:
+                    - img "Cookie Jar" [ref=e246]
+                    - img [ref=e249]
+                  - generic [ref=e250]:
+                    - paragraph [ref=e251]: Cookie Jar
+                    - paragraph [ref=e252]: ₹279
+                - generic [ref=e253]:
+                  - generic [ref=e254]:
+                    - img "Handmade Soap Set" [ref=e255]
+                    - img [ref=e258]
+                  - generic [ref=e259]:
+                    - paragraph [ref=e260]: Handmade Soap Set
+                    - paragraph [ref=e261]: ₹199
+                - generic [ref=e262]:
+                  - generic [ref=e263]:
+                    - img "Hardcover Journal" [ref=e264]
+                    - img [ref=e267]
+                  - generic [ref=e268]:
+                    - paragraph [ref=e269]: Hardcover Journal
+                    - paragraph [ref=e270]: ₹299
+                - generic [ref=e271]:
+                  - generic [ref=e272]:
+                    - img "Leather Keychain" [ref=e273]
+                    - img [ref=e276]
+                  - generic [ref=e277]:
+                    - paragraph [ref=e278]: Leather Keychain
+                    - paragraph [ref=e279]: ₹99
+                - generic [ref=e280]:
+                  - generic [ref=e281]:
+                    - img "Photo Frame" [ref=e282]
+                    - img [ref=e285]
+                  - generic [ref=e286]:
+                    - paragraph [ref=e287]: Photo Frame
+                    - paragraph [ref=e288]: ₹249
+                - generic [ref=e289]:
+                  - generic [ref=e290]:
+                    - img "Premium Pen" [ref=e291]
+                    - img [ref=e294]
+                  - generic [ref=e295]:
+                    - paragraph [ref=e296]: Premium Pen
+                    - paragraph [ref=e297]: ₹149
+                - generic [ref=e298]:
+                  - generic [ref=e299]:
+                    - img "Scented Candle" [ref=e300]
+                    - img [ref=e303]
+                  - generic [ref=e304]:
+                    - paragraph [ref=e305]: Scented Candle
+                    - paragraph [ref=e306]: ₹299
+                - generic [ref=e307]:
+                  - generic [ref=e308]:
+                    - img "Steel Water Bottle" [ref=e309]
+                    - img [ref=e312]
+                  - generic [ref=e313]:
+                    - paragraph [ref=e314]: Steel Water Bottle
+                    - paragraph [ref=e315]: ₹399
+          - button "Back" [ref=e316]:
+            - img [ref=e317]
+            - text: Back
+        - generic [ref=e71]:
+          - heading "Your Custom Box" [level=3] [ref=e72]
+          - paragraph [ref=e73]: 1/6 Items Selected
+          - generic [ref=e192]:
+            - generic [ref=e193]:
+              - generic [ref=e194]: Luxury Wooden Box
+              - generic [ref=e195]: ₹500
+            - generic [ref=e332]:
+              - generic [ref=e333]: Assorted Chocolates
+              - generic [ref=e334]: ₹349
+          - generic [ref=e74]:
+            - img [ref=e75]
+            - text: "Subtotal:"
+            - generic [ref=e78]: ₹849
+          - button "Review Box" [ref=e319]:
+            - text: Review Box
+            - img [ref=e80]
+  - contentinfo [ref=e82]:
+    - generic [ref=e84]:
+      - heading "Ready to Make Someone Happy?" [level=2] [ref=e85]
+      - paragraph [ref=e86]: "\"Your requirement is our responsibility.\" — Let us handle every gifting need."
+      - generic [ref=e87]:
+        - link "Shop Now" [ref=e88] [cursor=pointer]:
+          - /url: /store
+        - link "Get Bulk Quote" [ref=e89] [cursor=pointer]:
+          - /url: /custom-orders
+    - generic [ref=e91]:
+      - generic [ref=e92]:
+        - link "Ohh My Happiness Ohh My Happiness Your requirement is our responsibility." [ref=e93] [cursor=pointer]:
+          - /url: /
+          - img "Ohh My Happiness" [ref=e95]
+          - generic [ref=e96]:
+            - paragraph [ref=e97]: Ohh My Happiness
+            - paragraph [ref=e98]: Your requirement is our responsibility.
+        - paragraph [ref=e99]: India's most trusted gifting brand. Bringing joy, warmth, and smiles through thoughtfully curated gifts for every occasion.
+        - generic [ref=e100]:
+          - link "IG" [ref=e101] [cursor=pointer]:
+            - /url: "#"
+          - link "FB" [ref=e102] [cursor=pointer]:
+            - /url: "#"
+          - link "TW" [ref=e103] [cursor=pointer]:
+            - /url: "#"
+          - link "YT" [ref=e104] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e105]:
+        - heading "Quick Links" [level=4] [ref=e106]
+        - list [ref=e107]:
+          - listitem [ref=e108]:
+            - link "Home" [ref=e109] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e110]:
+            - link "Corporate Gifting" [ref=e111] [cursor=pointer]:
+              - /url: /corporate-gifting
+          - listitem [ref=e112]:
+            - link "Personal Gifting" [ref=e113] [cursor=pointer]:
+              - /url: /personal-gifting
+          - listitem [ref=e114]:
+            - link "Store" [ref=e115] [cursor=pointer]:
+              - /url: /store
+          - listitem [ref=e116]:
+            - link "Custom Orders" [ref=e117] [cursor=pointer]:
+              - /url: /custom-orders
+          - listitem [ref=e118]:
+            - link "About Us" [ref=e119] [cursor=pointer]:
+              - /url: /about
+          - listitem [ref=e120]:
+            - link "Blog" [ref=e121] [cursor=pointer]:
+              - /url: /blog
+      - generic [ref=e122]:
+        - heading "Gift Categories" [level=4] [ref=e123]
+        - list [ref=e124]:
+          - listitem [ref=e125]:
+            - link "Corporate Hampers" [ref=e126] [cursor=pointer]:
+              - /url: /store?category=corporate-hampers
+          - listitem [ref=e127]:
+            - link "Festival Gifts" [ref=e128] [cursor=pointer]:
+              - /url: /store?category=festival-gifts
+          - listitem [ref=e129]:
+            - link "Personalized Gifts" [ref=e130] [cursor=pointer]:
+              - /url: /store?category=personalized-gifts
+          - listitem [ref=e131]:
+            - link "Luxury Collections" [ref=e132] [cursor=pointer]:
+              - /url: /store?category=luxury-collections
+          - listitem [ref=e133]:
+            - link "Wellness Kits" [ref=e134] [cursor=pointer]:
+              - /url: /store?category=wellness-kits
+          - listitem [ref=e135]:
+            - link "Onboarding Kits" [ref=e136] [cursor=pointer]:
+              - /url: /store?category=onboarding-kits
+          - listitem [ref=e137]:
+            - link "Bestsellers" [ref=e138] [cursor=pointer]:
+              - /url: /store?filter=bestseller
+      - generic [ref=e139]:
+        - heading "Contact Us" [level=4] [ref=e140]
+        - list [ref=e141]:
+          - listitem [ref=e142]:
+            - img [ref=e143]
+            - generic [ref=e145]:
+              - paragraph [ref=e146]: +91 99999 99999
+              - paragraph [ref=e147]: Mon–Sat, 9am–7pm
+          - listitem [ref=e148]:
+            - img [ref=e149]
+            - link "hello@ohhmyhappiness.com" [ref=e152] [cursor=pointer]:
+              - /url: mailto:hello@ohhmyhappiness.com
+          - listitem [ref=e153]:
+            - img [ref=e154]
+            - paragraph [ref=e157]:
+              - text: Mumbai, Maharashtra
+              - text: India — 400001
+        - generic [ref=e158]:
+          - paragraph [ref=e159]: Subscribe to our newsletter
+          - generic [ref=e160]:
+            - textbox "your@email.com" [ref=e161]
+            - button "Join" [ref=e162]
+    - generic [ref=e164]:
+      - paragraph [ref=e165]: © 2026 Ohh My Happiness. All rights reserved.
+      - generic [ref=e166]:
+        - link "Privacy Policy" [ref=e167] [cursor=pointer]:
+          - /url: /privacy
+        - link "Terms of Service" [ref=e168] [cursor=pointer]:
+          - /url: /terms
+        - link "Refund Policy" [ref=e169] [cursor=pointer]:
+          - /url: /refund
+      - generic [ref=e170]:
+        - generic [ref=e171]: visa
+        - generic [ref=e172]: mastercard
+        - generic [ref=e173]: upi
+        - generic [ref=e174]: razorpay
+  - button "Open chat" [ref=e175]:
+    - img [ref=e176]
+  - button "Open Next.js Dev Tools" [ref=e183] [cursor=pointer]:
+    - img [ref=e184]
+  - alert [ref=e187]

@@ -3,6 +3,12 @@ import { streamText } from 'ai';
 import { chatbotKnowledge } from '@/lib/chatbot-knowledge';
 import { createServiceClient } from '@/lib/supabase/service';
 import { env } from '@/env';
+import { RateLimiter } from '@/lib/rate-limit';
+
+const limiter = new RateLimiter({
+    limit: 5,
+    windowMs: 60 * 1000, // 1 minute
+});
 
 
 /**
@@ -46,6 +52,16 @@ export async function POST(req: Request) {
                 headers: { 'Content-Type': 'application/json' },
             });
         }
+
+        const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+        const rateLimit = limiter.check(ip);
+        if (!rateLimit.success) {
+            return new Response(JSON.stringify({ error: 'Too Many Requests' }), {
+                status: 429,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
 
         const { messages } = await req.json();
         

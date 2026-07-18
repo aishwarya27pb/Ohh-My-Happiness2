@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, X, Loader2 } from "lucide-react";
 import { createCustomerAction } from "@/app/actions/admin/customers.actions";
 
 export function AddCustomerModal() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export function AddCustomerModal() {
         setError(res.error || "Failed to create user");
       } else {
         setSuccess(true);
+        router.refresh();
         setForm({
           firstName: "",
           lastName: "",

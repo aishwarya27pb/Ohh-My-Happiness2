@@ -1,15 +1,21 @@
 import { getCustomersAction } from "@/app/actions/admin/customers.actions";
 import Link from "next/link";
 import { ChevronRight, Users } from "lucide-react";
+import { AddCustomerModal } from "./AddCustomerModal";
 
 export default async function AdminCustomersPage() {
   const customers = await getCustomersAction();
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-[#1A1A1A]">Customers</h1>
-        <p className="text-[#6B6B6B] text-sm mt-1">{customers.length} registered customers</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-black text-[#1A1A1A]">Customers</h1>
+          <p className="text-[#6B6B6B] text-sm mt-1">{customers.length} registered customers</p>
+        </div>
+        <div>
+          <AddCustomerModal />
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">

@@ -131,7 +131,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       } else if (event === "SIGNED_OUT") {
         setCurrentUserId(null);
         setLoadedFromDB(false);
-        // Do NOT clear the local storage wishlist on logout so items are never lost!
+        dispatch({ type: "CLEAR" });
+        localStorage.removeItem("omh-wishlist");
       }
     });
 

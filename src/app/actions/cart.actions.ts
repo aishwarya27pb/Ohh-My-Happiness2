@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { CartItem } from "@/types";
+import type { CartItem, Product } from "@/types";
 
 /**
  * Saves the user's cart to their profile in Supabase
@@ -12,10 +12,25 @@ export async function saveCartAction(items: CartItem[]) {
 
   if (!user) return { error: "Not authenticated" };
 
+  // Fetch existing profile data first to avoid overwriting wishlist
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("cart_data")
+    .eq("id", user.id)
+    .single();
+
+  let wishlist: Product[] = [];
+  if (profile?.cart_data && typeof profile.cart_data === "object" && !Array.isArray(profile.cart_data)) {
+    const rawData = profile.cart_data as Record<string, any>;
+    if ("wishlist" in rawData) {
+      wishlist = rawData.wishlist || [];
+    }
+  }
+
   const { error } = await supabase
     .from("profiles")
     .update({ 
-      cart_data: items as any,
+      cart_data: { cart: items, wishlist } as any,
       updated_at: new Date().toISOString()
     })
     .eq("id", user.id);
@@ -48,5 +63,13 @@ export async function getSavedCartAction() {
     return { error: error.message };
   }
 
-  return { cart: (data?.cart_data as unknown as CartItem[]) || [] };
+  const cartData = data?.cart_data;
+  if (Array.isArray(cartData)) {
+    return { cart: (cartData as unknown as CartItem[]) };
+  } else if (cartData && typeof cartData === "object") {
+    const rawData = cartData as Record<string, any>;
+    return { cart: (rawData.cart as unknown as CartItem[]) || [] };
+  }
+
+  return { cart: [] };
 }

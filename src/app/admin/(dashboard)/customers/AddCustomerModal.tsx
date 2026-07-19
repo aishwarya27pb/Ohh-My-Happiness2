@@ -64,8 +64,9 @@ export function AddCustomerModal() {
       setIsLoading(false);
       return;
     }
-    if (!form.email || !form.email.includes("@")) {
-      setError("Invalid email address.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!form.email || !emailRegex.test(form.email)) {
+      setError("Please enter a valid email address.");
       setIsLoading(false);
       return;
     }

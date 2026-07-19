@@ -73,8 +73,9 @@ export async function createCustomerAction(data: {
       throw new Error("Password must be at least 6 characters.");
     }
 
-    if (!data.email || !data.email.includes("@")) {
-      throw new Error("Invalid email address.");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!data.email || !emailRegex.test(data.email)) {
+      throw new Error("Please enter a valid email address.");
     }
 
     // Generate a default password if not provided

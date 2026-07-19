@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
 export function ScrollAnimationManager() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isFirstMount = useRef(true);
 
-  // Apply scroll Restorer behavior & permanent monkey-patch on mount
+  // Apply scroll Restorer behavior, link interceptor, & permanent monkey-patch on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -49,17 +50,68 @@ export function ScrollAnimationManager() {
 
     // Save scroll position on scroll events
     const handleScroll = () => {
-      // Track page positions including 0
       sessionStorage.setItem(`scroll-pos:${window.location.pathname}`, window.scrollY.toString());
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
+    // Intercept storefront link clicks to scroll smoothly to top first
+    const handleLinkClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest("a");
+      if (!anchor) return;
+
+      // Handle standard clicks only
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
+
+      const target = anchor.getAttribute("target");
+      if (target && target !== "_self") {
+        return;
+      }
+
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+
+      // Filter relative storefront paths
+      const isRelative = href.startsWith("/") && !href.startsWith("//");
+      if (!isRelative) return;
+
+      // Skip current page hash changes
+      if (href.includes("#") && href.split("#")[0] === window.location.pathname) {
+        return;
+      }
+
+      // Skip same page links
+      if (href === window.location.pathname) {
+        return;
+      }
+
+      // If already at top of the page, navigate immediately
+      if (window.scrollY <= 20) {
+        return;
+      }
+
+      // Intercept and animate scroll-to-top first before routing
+      e.preventDefault();
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+
+      setTimeout(() => {
+        router.push(href);
+      }, 350);
+    };
+
+    window.addEventListener("click", handleLinkClick, { capture: true });
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("click", handleLinkClick, { capture: true });
       window.scrollTo = originalScrollTo;
     };
-  }, []); // Run once on mount so it stays active during transition swaps!
+  }, [router]);
 
   // Perform smooth scroll transition on pathname / search parameter changes
   useEffect(() => {

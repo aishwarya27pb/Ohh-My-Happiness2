@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X, Loader2, Eye, EyeOff } from "lucide-react";
 import { createCustomerAction } from "@/app/actions/admin/customers.actions";
 
 export function AddCustomerModal() {
@@ -11,6 +11,7 @@ export function AddCustomerModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -22,7 +23,16 @@ export function AddCustomerModal() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    let filteredValue = value;
+
+    if (name === "firstName" || name === "lastName") {
+      filteredValue = value.replace(/[^a-zA-Z]/g, "").slice(0, 20);
+    } else if (name === "phone") {
+      filteredValue = value.replace(/\D/g, "").slice(0, 10);
+    }
+
+    setForm((prev) => ({ ...prev, [name]: filteredValue }));
     setError(null);
   };
 
@@ -31,6 +41,34 @@ export function AddCustomerModal() {
     setIsLoading(true);
     setError(null);
     setSuccess(false);
+
+    // Validation checks
+    const nameRegex = /^[a-zA-Z]+$/;
+    if (!form.firstName || !nameRegex.test(form.firstName) || form.firstName.length > 20) {
+      setError("First name must contain only alphabets and be maximum 20 characters.");
+      setIsLoading(false);
+      return;
+    }
+    if (!form.lastName || !nameRegex.test(form.lastName) || form.lastName.length > 20) {
+      setError("Last name must contain only alphabets and be maximum 20 characters.");
+      setIsLoading(false);
+      return;
+    }
+    if (form.phone.length !== 10) {
+      setError("Phone number must be exactly 10 digits.");
+      setIsLoading(false);
+      return;
+    }
+    if (form.password && form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setIsLoading(false);
+      return;
+    }
+    if (!form.email || !form.email.includes("@")) {
+      setError("Invalid email address.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await createCustomerAction(form);
@@ -180,14 +218,23 @@ export function AddCustomerModal() {
                   <label className="block text-[10px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">
                     Password (Optional)
                   </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="Auto-generated if blank"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E5] focus:border-[#FFB449] focus:outline-none text-sm text-[#1A1A1A]"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      placeholder="Auto-generated if blank"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E5] focus:border-[#FFB449] focus:outline-none text-sm text-[#1A1A1A] pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#FF8A00] transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-[#6B6B6B] uppercase tracking-wider mb-1">

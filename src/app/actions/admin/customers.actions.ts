@@ -55,6 +55,28 @@ export async function createCustomerAction(data: {
     await verifyAdmin();
     const supabase = await createAdminClient();
     
+    // Backend validations
+    const nameRegex = /^[a-zA-Z]+$/;
+    if (!data.firstName || !nameRegex.test(data.firstName) || data.firstName.length > 20) {
+      throw new Error("First name must contain only alphabets and be maximum 20 characters.");
+    }
+    if (!data.lastName || !nameRegex.test(data.lastName) || data.lastName.length > 20) {
+      throw new Error("Last name must contain only alphabets and be maximum 20 characters.");
+    }
+    
+    const cleanPhone = data.phone.replace(/\D/g, "");
+    if (cleanPhone.length !== 10) {
+      throw new Error("Phone number must be exactly 10 digits.");
+    }
+
+    if (data.password && data.password.length < 6) {
+      throw new Error("Password must be at least 6 characters.");
+    }
+
+    if (!data.email || !data.email.includes("@")) {
+      throw new Error("Invalid email address.");
+    }
+
     // Generate a default password if not provided
     const userPassword = data.password || Math.random().toString(36).slice(-10) + "OMH!";
 

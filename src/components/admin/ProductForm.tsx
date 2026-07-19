@@ -114,17 +114,25 @@ export default function ProductForm({ initialData, categories }: ProductFormProp
       .slice(0, 8) // Safety: Keep slugs reasonably short
       .join("-");
     
-    formData.slug = cleanSlug;
+    const submissionData = {
+      ...formData,
+      slug: cleanSlug,
+    };
+
+    // If an image URL is pasted but not explicitly added by clicking 'Add URL', include it
+    if (imgInput.trim() && !submissionData.images.includes(imgInput.trim())) {
+      submissionData.images = [...submissionData.images, imgInput.trim()];
+    }
 
     try {
       const { createProductAction, updateProductAction } = await import("@/app/actions/product.actions");
       
       if (initialData) {
-        const { error } = await updateProductAction(initialData.id, formData, formData.slug);
+        const { error } = await updateProductAction(initialData.id, submissionData, submissionData.slug);
         if (error) throw error;
         toast.success("Product updated successfully!");
       } else {
-        const { error } = await createProductAction(formData);
+        const { error } = await createProductAction(submissionData);
         if (error) throw error;
         toast.success("Product created successfully!");
       }

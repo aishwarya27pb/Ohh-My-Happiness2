@@ -69,8 +69,16 @@ export async function createCustomerAction(data: {
       throw new Error("Phone number must be exactly 10 digits.");
     }
 
-    if (data.password && data.password.length < 6) {
-      throw new Error("Password must be at least 6 characters.");
+    if (data.password) {
+      if (data.password.length < 6) {
+        throw new Error("Password must be at least 6 characters.");
+      }
+      const hasLetter = /[a-zA-Z]/.test(data.password);
+      const hasNumber = /[0-9]/.test(data.password);
+      const hasSpecial = /[^a-zA-Z0-9]/.test(data.password);
+      if (!hasLetter || !hasNumber || !hasSpecial) {
+        throw new Error("Password must contain at least one letter, one number, and one special character.");
+      }
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

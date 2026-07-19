@@ -59,10 +59,20 @@ export function AddCustomerModal() {
       setIsLoading(false);
       return;
     }
-    if (form.password && form.password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      setIsLoading(false);
-      return;
+    if (form.password) {
+      if (form.password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        setIsLoading(false);
+        return;
+      }
+      const hasLetter = /[a-zA-Z]/.test(form.password);
+      const hasNumber = /[0-9]/.test(form.password);
+      const hasSpecial = /[^a-zA-Z0-9]/.test(form.password);
+      if (!hasLetter || !hasNumber || !hasSpecial) {
+        setError("Password must contain at least one letter, one number, and one special character.");
+        setIsLoading(false);
+        return;
+      }
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!form.email || !emailRegex.test(form.email)) {

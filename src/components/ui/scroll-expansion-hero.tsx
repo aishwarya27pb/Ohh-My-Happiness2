@@ -27,31 +27,42 @@ const ScrollExpandMedia = ({
   scrollToExpand = "Scroll down to unwrap joy",
   children,
 }: ScrollExpandMediaProps) => {
-  const [targetProgress, setTargetProgress] = useState<number>(0);
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [showContent, setShowContent] = useState<boolean>(false);
-  const [mediaFullyExpanded, setMediaFullyExpanded] = useState<boolean>(false);
+  const [targetProgress, setTargetProgress] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("scroll-pos:/");
+      if (saved && parseInt(saved, 10) > 10) return 1;
+    }
+    return 0;
+  });
+
+  const [scrollProgress, setScrollProgress] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("scroll-pos:/");
+      if (saved && parseInt(saved, 10) > 10) return 1;
+    }
+    return 0;
+  });
+
+  const [showContent, setShowContent] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("scroll-pos:/");
+      if (saved && parseInt(saved, 10) > 10) return true;
+    }
+    return false;
+  });
+
+  const [mediaFullyExpanded, setMediaFullyExpanded] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("scroll-pos:/");
+      if (saved && parseInt(saved, 10) > 10) return true;
+    }
+    return false;
+  });
+
   const [touchStartY, setTouchStartY] = useState<number>(0);
   const [isMobileState, setIsMobileState] = useState<boolean>(false);
 
   const sectionRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? sessionStorage.getItem("scroll-pos:/") : null;
-    const hasScroll = saved && parseInt(saved, 10) > 10;
-
-    if (hasScroll) {
-      setTargetProgress(1);
-      setScrollProgress(1);
-      setShowContent(true);
-      setMediaFullyExpanded(true);
-    } else {
-      setTargetProgress(0);
-      setScrollProgress(0);
-      setShowContent(false);
-      setMediaFullyExpanded(false);
-    }
-  }, []);
 
   // Smooth lerp loop to interpolate scrollProgress towards targetProgress
   useEffect(() => {

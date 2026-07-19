@@ -10,6 +10,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { productsService } from "@/lib/services/products.service";
 import ScrollExpandMedia from "@/components/ui/scroll-expansion-hero";
+import ScrollVelocityTicker from "@/components/home/ScrollVelocityTicker";
 
 export const metadata: Metadata = {
   title: "Ohh My Happiness — Premium Corporate & Personal Gifting",
@@ -30,6 +31,7 @@ export default async function HomePage() {
           scrollToExpand="Scroll to unwrap happiness"
         >
           <Hero />
+          <ScrollVelocityTicker />
           <CategoryGrid />
           <BestsellerSection products={products} />
           <CorporateBanner />

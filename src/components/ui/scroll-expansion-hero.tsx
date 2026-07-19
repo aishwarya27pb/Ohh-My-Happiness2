@@ -37,10 +37,20 @@ const ScrollExpandMedia = ({
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setTargetProgress(0);
-    setScrollProgress(0);
-    setShowContent(false);
-    setMediaFullyExpanded(false);
+    const saved = typeof window !== "undefined" ? sessionStorage.getItem("scroll-pos:/") : null;
+    const hasScroll = saved && parseInt(saved, 10) > 10;
+
+    if (hasScroll) {
+      setTargetProgress(1);
+      setScrollProgress(1);
+      setShowContent(true);
+      setMediaFullyExpanded(true);
+    } else {
+      setTargetProgress(0);
+      setScrollProgress(0);
+      setShowContent(false);
+      setMediaFullyExpanded(false);
+    }
   }, []);
 
   // Smooth lerp loop to interpolate scrollProgress towards targetProgress

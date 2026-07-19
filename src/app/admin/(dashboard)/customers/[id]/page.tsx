@@ -2,6 +2,7 @@ import { getCustomerAction } from "@/app/actions/admin/customers.actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { CustomerActionButtons } from "./CustomerActionButtons";
 
 const STATUS_STYLES: Record<string, string> = {
   confirmed:   "bg-blue-50 text-blue-700",
@@ -47,6 +48,7 @@ export default async function AdminCustomerDetailPage({
             <p className="font-bold text-[#1A1A1A] text-lg">{name}</p>
             <p className="text-sm text-[#6B6B6B] mt-1">{profile.phone ?? "No phone"}</p>
             <p className="text-xs text-[#C4C4C4] mt-0.5 capitalize">{profile.role}</p>
+            <CustomerActionButtons profile={profile} />
           </div>
 
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5 text-sm space-y-3">

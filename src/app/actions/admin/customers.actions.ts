@@ -126,3 +126,83 @@ export async function createCustomerAction(data: {
     return { success: false, error: err instanceof Error ? err.message : "Creation failed" };
   }
 }
+
+export async function updateCustomerAction(
+  id: string,
+  data: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    role: "customer" | "admin";
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await verifyAdmin();
+    
+    // Server-side validation
+    const nameRegex = /^[a-zA-Z]+$/;
+    if (!data.firstName || !nameRegex.test(data.firstName) || data.firstName.length > 20) {
+      throw new Error("First name must contain only alphabets and be maximum 20 characters.");
+    }
+    if (!data.lastName || !nameRegex.test(data.lastName) || data.lastName.length > 20) {
+      throw new Error("Last name must contain only alphabets and be maximum 20 characters.");
+    }
+    const cleanPhone = data.phone.replace(/\D/g, "");
+    if (cleanPhone.length !== 10) {
+      throw new Error("Phone number must be exactly 10 digits.");
+    }
+
+    const supabase = await createAdminClient();
+    
+    // Update auth user metadata
+    const { error: authError } = await supabase.auth.admin.updateUserById(id, {
+      user_metadata: {
+        first_name: data.firstName,
+        last_name: data.lastName,
+      }
+    });
+
+    if (authError) {
+      return { success: false, error: authError.message };
+    }
+
+    // Update profile row
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        role: data.role,
+      })
+      .eq("id", id);
+
+    if (profileError) {
+      return { success: false, error: profileError.message };
+    }
+
+    revalidatePath("/admin/customers");
+    revalidatePath(`/admin/customers/${id}`);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Update failed" };
+  }
+}
+
+export async function deleteCustomerAction(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await verifyAdmin();
+    const supabase = await createAdminClient();
+    
+    // Delete from Supabase auth (will cascade to profiles)
+    const { error } = await supabase.auth.admin.deleteUser(id);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    
+    revalidatePath("/admin/customers");
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Deletion failed" };
+  }
+}

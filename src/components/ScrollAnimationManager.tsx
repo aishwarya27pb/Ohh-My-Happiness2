@@ -13,6 +13,11 @@ export function ScrollAnimationManager() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Skip scroll restoration logic on admin routes
+    if (window.location.pathname.startsWith("/admin")) {
+      return;
+    }
+
     // Set scroll restoration to manual so the browser doesn't do instant jumps
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -55,7 +60,7 @@ export function ScrollAnimationManager() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Intercept storefront link clicks to scroll smoothly to top first
+    // Intercept storefront link clicks to scroll smoothly to top first and show page transition loader
     const handleLinkClick = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest("a");
       if (!anchor) return;
@@ -77,6 +82,11 @@ export function ScrollAnimationManager() {
       const isRelative = href.startsWith("/") && !href.startsWith("//");
       if (!isRelative) return;
 
+      // Skip admin dashboard transitions
+      if (href.startsWith("/admin")) {
+        return;
+      }
+
       // Skip current page hash changes
       if (href.includes("#") && href.split("#")[0] === window.location.pathname) {
         return;
@@ -87,8 +97,12 @@ export function ScrollAnimationManager() {
         return;
       }
 
+      // Dispatch transition start event
+      window.dispatchEvent(new CustomEvent("page-transition-start"));
+
       // If already at top of the page, navigate immediately
       if (window.scrollY <= 20) {
+        router.push(href);
         return;
       }
 
@@ -116,6 +130,15 @@ export function ScrollAnimationManager() {
   // Perform smooth scroll transition on pathname / search parameter changes
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Skip scroll restoration logic on admin routes
+    if (pathname.startsWith("/admin")) {
+      return;
+    }
+
+    // Always hide transition loader on route completion
+    window.dispatchEvent(new CustomEvent("page-transition-end"));
+
     if (window.location.hash) return;
 
     const isFirst = isFirstMount.current;

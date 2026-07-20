@@ -5,6 +5,9 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { Toaster } from "react-hot-toast";
+import { Suspense } from "react";
+import { ScrollAnimationManager } from "@/components/ScrollAnimationManager";
+import PageTransition from "@/components/ui/PageTransition";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -71,7 +74,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#FFF9EE]">
         <CartProvider>
           <WishlistProvider>
-            {children}
+            <Suspense fallback={null}>
+              <ScrollAnimationManager />
+            </Suspense>
+            <PageTransition>
+              {children}
+            </PageTransition>
             <Toaster position="top-center" />
             <ChatWidget />
             <Analytics />

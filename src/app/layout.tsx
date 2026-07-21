@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { Suspense } from "react";
 import { ScrollAnimationManager } from "@/components/ScrollAnimationManager";
 import PageTransition from "@/components/ui/PageTransition";
+import SparkleTrail from "@/components/ui/SparkleTrail";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -77,6 +78,7 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <ScrollAnimationManager />
             </Suspense>
+            <SparkleTrail />
             <PageTransition>
               {children}
             </PageTransition>

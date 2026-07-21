@@ -2,6 +2,7 @@
 
 import React, {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   ReactNode,
@@ -20,6 +21,8 @@ interface ScrollExpandMediaProps {
   children?: ReactNode;
 }
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 const ScrollExpandMedia = ({
   bgImageSrc,
   title = "Ohh My Happiness",
@@ -27,37 +30,21 @@ const ScrollExpandMedia = ({
   scrollToExpand = "Scroll down to unwrap joy",
   children,
 }: ScrollExpandMediaProps) => {
-  const [targetProgress, setTargetProgress] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("scroll-pos:/");
-      if (saved && parseInt(saved, 10) > 10) return 1;
-    }
-    return 0;
-  });
+  const [targetProgress, setTargetProgress] = useState<number>(0);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [showContent, setShowContent] = useState<boolean>(false);
+  const [mediaFullyExpanded, setMediaFullyExpanded] = useState<boolean>(false);
 
-  const [scrollProgress, setScrollProgress] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("scroll-pos:/");
-      if (saved && parseInt(saved, 10) > 10) return 1;
+  // Restore unboxing state immediately before paint to prevent hydration mismatch and visual flash
+  useIsomorphicLayoutEffect(() => {
+    const saved = sessionStorage.getItem("scroll-pos:/");
+    if (saved && parseInt(saved, 10) > 10) {
+      setTargetProgress(1);
+      setScrollProgress(1);
+      setShowContent(true);
+      setMediaFullyExpanded(true);
     }
-    return 0;
-  });
-
-  const [showContent, setShowContent] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("scroll-pos:/");
-      if (saved && parseInt(saved, 10) > 10) return true;
-    }
-    return false;
-  });
-
-  const [mediaFullyExpanded, setMediaFullyExpanded] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("scroll-pos:/");
-      if (saved && parseInt(saved, 10) > 10) return true;
-    }
-    return false;
-  });
+  }, []);
 
   const [touchStartY, setTouchStartY] = useState<number>(0);
   const [isMobileState, setIsMobileState] = useState<boolean>(false);

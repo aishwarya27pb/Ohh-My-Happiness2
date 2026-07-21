@@ -16,12 +16,13 @@ interface Particle {
   rotationSpeed: number;
 }
 
+// Higher contrast brand colors to stand out on cream/light backgrounds
 const BRAND_COLORS = [
-  "#FFB449", // Gold
-  "#FF8A00", // Amber
-  "#F7C96A", // Warm Honey
-  "#FFE4C2", // Soft Peach
-  "#FFFFFF", // Pure White highlight
+  "#FF8A00", // Vibrant Amber (high contrast)
+  "#E06900", // Deep Orange
+  "#D97706", // Dark Honey
+  "#B45309", // Rich Bronze / Gold
+  "#1A1A1A", // Dark Charcoal (extremely visible on cream!)
 ];
 
 export default function SparkleTrail() {
@@ -48,20 +49,20 @@ export default function SparkleTrail() {
     const spawnSparkle = (x: number, y: number) => {
       const color = BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)];
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 1.5 + 0.5;
+      const speed = Math.random() * 1.2 + 0.4;
       
       const newParticle: Particle = {
         x,
         y,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 0.5, // drift slightly upwards
+        vy: Math.sin(angle) * speed - 0.4, // drift slightly upwards
         color,
-        maxSize: Math.random() * 7 + 4, // size range 4px - 11px
-        size: 1, // start small and grow, then shrink
+        maxSize: Math.random() * 6 + 4, // size range 4px - 10px
+        size: 1, // start small and grow
         opacity: 1,
-        decay: Math.random() * 0.02 + 0.015, // decay rate
+        decay: Math.random() * 0.02 + 0.012, // decay rate
         rotation: Math.random() * Math.PI,
-        rotationSpeed: (Math.random() - 0.5) * 0.05,
+        rotationSpeed: (Math.random() - 0.5) * 0.06,
       };
 
       particlesRef.current.push(newParticle);
@@ -77,9 +78,8 @@ export default function SparkleTrail() {
       // Only spawn if mouse has moved a threshold to avoid cluttering when slow/stopped
       if (dist > 6) {
         // Spawn 1 or 2 sparkles
-        const count = Math.random() > 0.5 ? 2 : 1;
+        const count = Math.random() > 0.55 ? 2 : 1;
         for (let i = 0; i < count; i++) {
-          // Add minor jitter so they spread from the trailing line
           const jitterX = (Math.random() - 0.5) * 4;
           const jitterY = (Math.random() - 0.5) * 4;
           spawnSparkle(clientX + jitterX, clientY + jitterY);
@@ -97,7 +97,7 @@ export default function SparkleTrail() {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
 
-    // Draw a 4-pointed sparkle star
+    // Draw a 4-pointed sparkle star with contrast drop-shadow and thin outline
     const drawSparkleStar = (
       c: CanvasRenderingContext2D,
       cx: number,
@@ -109,7 +109,7 @@ export default function SparkleTrail() {
     ) => {
       const spikes = 4;
       const outerRadius = size;
-      const innerRadius = size * 0.22;
+      const innerRadius = size * 0.23;
       let rot = rotation;
       const step = Math.PI / spikes;
 
@@ -135,11 +135,23 @@ export default function SparkleTrail() {
       }
       
       c.closePath();
+      
+      // Configure shadow to create a high-contrast dark outline/drop-shadow
+      c.shadowColor = "rgba(26, 26, 26, 0.22)";
+      c.shadowBlur = 3;
+      c.shadowOffsetX = 0.5;
+      c.shadowOffsetY = 1;
+      
       c.fillStyle = color;
       c.globalAlpha = opacity;
-      c.shadowColor = color;
-      c.shadowBlur = size * 0.8; // subtle glow
       c.fill();
+      
+      // Draw a subtle thin dark border for extra definition on light backgrounds
+      c.strokeStyle = "rgba(26, 26, 26, 0.12)";
+      c.lineWidth = 0.5;
+      c.shadowColor = "transparent"; // disable shadow for stroke
+      c.stroke();
+      
       c.restore();
     };
 
@@ -161,7 +173,7 @@ export default function SparkleTrail() {
         if (p.opacity > 0.6) {
           p.size += (p.maxSize - p.size) * 0.2;
         } else {
-          p.size -= 0.15;
+          p.size -= 0.12;
         }
 
         if (p.opacity <= 0 || p.size <= 0.1) {
@@ -189,7 +201,6 @@ export default function SparkleTrail() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-[999999]"
-      style={{ mixBlendMode: "screen" }}
     />
   );
 }

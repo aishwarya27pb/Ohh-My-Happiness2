@@ -8,6 +8,7 @@ export function ScrollAnimationManager() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isFirstMount = useRef(true);
+  const isScrollingToTop = useRef(false);
 
   // Apply scroll Restorer behavior, link interceptor, & permanent monkey-patch on mount
   useEffect(() => {
@@ -53,8 +54,9 @@ export function ScrollAnimationManager() {
       return originalScrollTo.apply(window, arguments as any);
     };
 
-    // Save scroll position on scroll events
+    // Save scroll position on scroll events, unless we are currently automating smooth scroll-to-top
     const handleScroll = () => {
+      if (isScrollingToTop.current) return;
       sessionStorage.setItem(`scroll-pos:${window.location.pathname}`, window.scrollY.toString());
     };
 
@@ -102,9 +104,14 @@ export function ScrollAnimationManager() {
 
       // If already at top of the page, navigate immediately
       if (window.scrollY <= 20) {
+        sessionStorage.setItem(`scroll-pos:${window.location.pathname}`, window.scrollY.toString());
         router.push(href);
         return;
       }
+
+      // Save scroll position immediately BEFORE starting scroll-to-top animation
+      sessionStorage.setItem(`scroll-pos:${window.location.pathname}`, window.scrollY.toString());
+      isScrollingToTop.current = true;
 
       // Intercept and animate scroll-to-top first before routing
       e.preventDefault();
@@ -135,6 +142,9 @@ export function ScrollAnimationManager() {
     if (pathname.startsWith("/admin")) {
       return;
     }
+
+    // Reset scroll-to-top interception flag
+    isScrollingToTop.current = false;
 
     // Always hide transition loader on route completion
     window.dispatchEvent(new CustomEvent("page-transition-end"));

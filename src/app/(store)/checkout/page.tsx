@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { Check, CreditCard, MapPin, User } from "lucide-react";
-import { createOrderAction } from "@/app/actions/orders.actions";
+import { createOrderAction, createRazorpayOrderAction, verifyRazorpayPaymentAction } from "@/app/actions/orders.actions";
 import Select from "@/components/ui/Select";
 
 const states = [
@@ -43,22 +43,117 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") {
+        resolve(false);
+        return;
+      }
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePlaceOrder = async () => {
     setIsPlacing(true);
     setOrderError(null);
-    const result = await createOrderAction(state.items, form, {
-      subtotal,
-      shipping,
-      discount,
-      total,
-    });
-    if ("error" in result && result.error) {
-      setOrderError(result.error as string);
+
+    try {
+      // 1. Create order in our database
+      const result = await createOrderAction(state.items, form, {
+        subtotal,
+        shipping,
+        discount,
+        total,
+      });
+
+      if ("error" in result && result.error) {
+        setOrderError(result.error as string);
+        setIsPlacing(false);
+        return;
+      }
+
+      const { orderId, orderNumber } = result as { orderId: string; orderNumber: string };
+
+      // 2. If it is Cash on Delivery, complete immediately
+      if (form.paymentMethod === "cod") {
+        clearCart();
+        router.push(`/order-confirmation?order=${orderNumber}`);
+        return;
+      }
+
+      // 3. For Razorpay / UPI online payments:
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        setOrderError("Failed to load Razorpay SDK. Please check your internet connection.");
+        setIsPlacing(false);
+        return;
+      }
+
+      // Create Razorpay Order
+      const rzpOrder = await createRazorpayOrderAction(orderId);
+      if (rzpOrder.error) {
+        setOrderError(rzpOrder.error);
+        setIsPlacing(false);
+        return;
+      }
+
+      // Open Razorpay Checkout Modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder",
+        amount: rzpOrder.amount,
+        currency: rzpOrder.currency,
+        name: "Ohh My Happiness",
+        description: `Order #${orderNumber}`,
+        order_id: rzpOrder.id,
+        handler: async function (response: any) {
+          setIsPlacing(true);
+          // Verify signature on server
+          const verifyResult = await verifyRazorpayPaymentAction({
+            orderId,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpaySignature: response.razorpay_signature,
+          });
+
+          if (verifyResult.success) {
+            clearCart();
+            router.push(`/order-confirmation?order=${orderNumber}`);
+          } else {
+            setOrderError(verifyResult.error || "Payment verification failed.");
+            setIsPlacing(false);
+          }
+        },
+        prefill: {
+          name: `${form.firstName} ${form.lastName}`,
+          email: form.email,
+          contact: form.phone,
+        },
+        theme: {
+          color: "#FF8A00", // brand orange color
+        },
+        modal: {
+          ondismiss: function () {
+            setIsPlacing(false);
+          },
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+
+    } catch (err) {
+      setOrderError(err instanceof Error ? err.message : "An unexpected error occurred.");
       setIsPlacing(false);
-      return;
     }
-    clearCart();
-    router.push(`/order-confirmation?order=${(result as { orderNumber: string }).orderNumber}`);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

@@ -6,6 +6,10 @@ import type { CartItemParam } from "@/lib/services/orders.service";
 import type { OrderStatus } from "@/lib/supabase/types";
 import { headers } from "next/headers";
 import { RateLimiter } from "@/lib/rate-limit";
+import Razorpay from "razorpay";
+import crypto from "crypto";
+import { env } from "@/env";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const actionLimiter = new RateLimiter({
   limit: 10,
@@ -116,5 +120,100 @@ export async function updateOrderStatusAction(
     return {};
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Update failed" };
+  }
+}
+
+export async function createRazorpayOrderAction(
+  orderId: string
+): Promise<{ id: string; amount: number; currency: string; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select("id, total, status, payment_status")
+      .eq("id", orderId)
+      .single();
+
+    if (error || !order) {
+      throw new Error("Order not found");
+    }
+
+    if (order.payment_status === "paid") {
+      throw new Error("Order already paid");
+    }
+
+    const razorpay = new Razorpay({
+      key_id: env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+      key_secret: env.RAZORPAY_KEY_SECRET || "",
+    });
+
+    const amountInPaise = Math.round(order.total * 100);
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: amountInPaise,
+      currency: "INR",
+      receipt: order.id,
+    });
+
+    return {
+      id: razorpayOrder.id,
+      amount: typeof razorpayOrder.amount === "number" ? razorpayOrder.amount : parseInt(razorpayOrder.amount as string, 10),
+      currency: razorpayOrder.currency,
+    };
+  } catch (err) {
+    return {
+      id: "",
+      amount: 0,
+      currency: "INR",
+      error: err instanceof Error ? err.message : "Razorpay order creation failed",
+    };
+  }
+}
+
+export interface RazorpayVerificationParams {
+  orderId: string;
+  razorpayPaymentId: string;
+  razorpayOrderId: string;
+  razorpaySignature: string;
+}
+
+export async function verifyRazorpayPaymentAction(
+  params: RazorpayVerificationParams
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const body = params.razorpayOrderId + "|" + params.razorpayPaymentId;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", env.RAZORPAY_KEY_SECRET || "")
+      .update(body.toString())
+      .digest("hex");
+
+    const isSignatureValid = expectedSignature === params.razorpaySignature;
+
+    if (!isSignatureValid) {
+      throw new Error("Invalid payment signature");
+    }
+
+    const serviceClient = createServiceClient();
+    
+    // Update order to paid and confirmed
+    const { error: updateError } = await serviceClient
+      .from("orders")
+      .update({
+        status: "confirmed",
+        payment_status: "paid"
+      })
+      .eq("id", params.orderId);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Payment verification failed"
+    };
   }
 }

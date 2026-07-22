@@ -160,14 +160,23 @@ function AdminSignupForm() {
                 <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">
                   Confirm Password
                 </label>
-                <input
-                  type="password"
-                  value={form.confirmPassword}
-                  onChange={update("confirmPassword")}
-                  required
-                  placeholder="Repeat password"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:border-[#FFB449]/50 transition-colors text-sm"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={form.confirmPassword}
+                    onChange={update("confirmPassword")}
+                    required
+                    placeholder="Repeat password"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/20 focus:outline-none focus:border-[#FFB449]/50 transition-colors text-sm pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               <button

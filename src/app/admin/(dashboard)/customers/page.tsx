@@ -1,7 +1,7 @@
 import { getCustomersAction } from "@/app/actions/admin/customers.actions";
-import Link from "next/link";
 import { ChevronRight, Users } from "lucide-react";
 import { AddCustomerModal } from "./AddCustomerModal";
+import ClickableRow from "@/components/admin/ClickableRow";
 
 export default async function AdminCustomersPage() {
   const customers = await getCustomersAction();
@@ -42,26 +42,25 @@ export default async function AdminCustomersPage() {
               {customers.map((c) => {
                 const name = [c.first_name, c.last_name].filter(Boolean).join(" ") || "—";
                 return (
-                  <tr key={c.id} className="group relative hover:bg-[#FAFAFA] transition-colors cursor-pointer">
-                    <td className="px-5 py-4 relative">
-                      <Link href={`/admin/customers/${c.id}`} className="absolute inset-0 z-0" aria-label={`View ${name}`} />
-                      <div className="flex items-center gap-3 relative z-10 pointer-events-none">
+                  <ClickableRow key={c.id} href={`/admin/customers/${c.id}`} className="group hover:bg-[#FAFAFA]">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#FFB449] text-white text-xs font-bold flex items-center justify-center shrink-0">
                           {(c.first_name?.[0] ?? c.phone?.[0] ?? "?").toUpperCase()}
                         </div>
                         <span className="font-semibold text-[#1A1A1A]">{name}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-[#6B6B6B] relative z-10 pointer-events-none">{c.phone ?? "—"}</td>
-                    <td className="px-5 py-4 text-[#6B6B6B] relative z-10 pointer-events-none">
+                    <td className="px-5 py-4 text-[#6B6B6B]">{c.phone ?? "—"}</td>
+                    <td className="px-5 py-4 text-[#6B6B6B]">
                       {new Date(c.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
-                    <td className="px-5 py-4 text-right relative z-10 pointer-events-none">
+                    <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end text-[#C4C4C4] group-hover:text-[#FFB449] transition-colors">
                         <ChevronRight size={16} />
                       </div>
                     </td>
-                  </tr>
+                  </ClickableRow>
                 );
               })}
             </tbody>

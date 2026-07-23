@@ -10,6 +10,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { env } from "@/env";
 import { createServiceClient } from "@/lib/supabase/service";
+import { sendWhatsAppMessage } from "@/lib/services/whatsapp.service";
 
 const actionLimiter = new RateLimiter({
   limit: 10,
@@ -106,6 +107,22 @@ export async function createOrderAction(
     total: calculatedTotal,
     couponCode: pricing.couponCode,
   });
+
+  if (form.paymentMethod === "cod" && form.phone) {
+    try {
+      await sendWhatsAppMessage({
+        recipientPhone: form.phone,
+        templateName: "order_confirmation_omh",
+        parameters: [
+          `${form.firstName} ${form.lastName}`,
+          result.orderNumber,
+          `₹${calculatedTotal}`,
+        ],
+      });
+    } catch (wsErr) {
+      console.error("WhatsApp trigger error for COD:", wsErr);
+    }
+  }
 
   return result;
 }
@@ -207,6 +224,29 @@ export async function verifyRazorpayPaymentAction(
 
     if (updateError) {
       throw new Error(updateError.message);
+    }
+
+    // Retrieve order details to trigger the WhatsApp message
+    try {
+      const { data: orderData } = await serviceClient
+        .from("orders")
+        .select("order_number, contact_name, contact_phone, total")
+        .eq("id", params.orderId)
+        .single();
+
+      if (orderData && orderData.contact_phone) {
+        await sendWhatsAppMessage({
+          recipientPhone: orderData.contact_phone,
+          templateName: "order_confirmation_omh",
+          parameters: [
+            orderData.contact_name,
+            orderData.order_number,
+            `₹${orderData.total}`,
+          ],
+        });
+      }
+    } catch (wsErr) {
+      console.error("WhatsApp trigger error for Razorpay payment:", wsErr);
     }
 
     return { success: true };

@@ -10,6 +10,7 @@ const serverSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   WHATSAPP_API_URL: z.string().optional(),
   WHATSAPP_API_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
   GOOGLE_GENERATIVE_AI_API_KEY: isProd ? z.string().min(1) : z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

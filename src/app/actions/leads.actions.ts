@@ -6,6 +6,8 @@ import type { LeadStatus } from "@/lib/supabase/types";
 import { headers } from "next/headers";
 import { RateLimiter } from "@/lib/rate-limit";
 
+import { sendWhatsAppMessage } from "@/lib/services/whatsapp.service";
+
 const actionLimiter = new RateLimiter({
   limit: 10,
   windowMs: 60 * 1000,
@@ -56,6 +58,22 @@ export async function createLeadAction(
       has_logo: form.has_logo,
       status: "new",
     });
+
+    if (form.phone) {
+      try {
+        await sendWhatsAppMessage({
+          recipientPhone: form.phone,
+          templateName: "custom_request_received",
+          parameters: [
+            form.name,
+            form.category || "Custom Gifting",
+            form.quantity ? String(form.quantity) : "Not Specified",
+          ],
+        });
+      } catch (wsErr) {
+        console.error("WhatsApp trigger error for custom request:", wsErr);
+      }
+    }
 
     return {};
   } catch (err) {

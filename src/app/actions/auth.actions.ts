@@ -159,233 +159,251 @@ export async function updatePassword(password: string) {
 // ── OTP / Magic Link Login ────────────────────────────────────────────────
 
 export async function signInWithOTP(identifier: string, type: "email" | "phone" = "email") {
-  if (type === "email") {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: identifier,
-      options: {
-        shouldCreateUser: true,
-      },
-    });
-    if (error) return { error: error.message };
-  } else {
-    // Custom WhatsApp OTP flow
-    const cleanedPhone = formatWhatsAppPhone(identifier);
-    if (!cleanedPhone) {
-      return { error: "Invalid phone number." };
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes validity
-
-    const serviceClient = createServiceClient();
-
-    // 1. Search if a profile already has this phone number
-    let existingUserId: string | null = null;
-    let existingProfile = null;
-
-    const { data: profile } = await serviceClient
-      .from("profiles")
-      .select("id, cart_data")
-      .eq("phone", cleanedPhone)
-      .maybeSingle();
-
-    if (profile) {
-      existingUserId = profile.id;
-      existingProfile = profile;
+  try {
+    if (type === "email") {
+      const supabase = await createClient();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: identifier,
+        options: {
+          shouldCreateUser: true,
+        },
+      });
+      if (error) return { error: error.message };
     } else {
-      // 2. Fallback: Check if user exists in auth.users by listing users
-      const { data: userData } = await serviceClient.auth.admin.listUsers();
-      const matchedUser = (userData?.users || []).find(
-        (u) => 
-          u.phone === cleanedPhone || 
-          u.phone === `+${cleanedPhone}` || 
-          u.phone?.replace(/\D/g, "") === cleanedPhone
-      );
-      if (matchedUser) {
-        existingUserId = matchedUser.id;
-        
-        // Check if they have a profile under that ID
-        const { data: prof } = await serviceClient
-          .from("profiles")
-          .select("id, cart_data")
-          .eq("id", existingUserId)
-          .maybeSingle();
-        existingProfile = prof;
+      // Custom WhatsApp OTP flow
+      const cleanedPhone = formatWhatsAppPhone(identifier);
+      if (!cleanedPhone) {
+        return { error: "Invalid phone number." };
       }
-    }
 
-    if (existingUserId) {
-      const currentCart = existingProfile?.cart_data && typeof existingProfile.cart_data === "object" ? existingProfile.cart_data : {};
-      const updatedCart = {
-        ...currentCart,
-        whatsapp_otp: otp,
-        whatsapp_otp_expires: expires,
-      };
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes validity
 
-      if (existingProfile) {
-        // Update profile
-        const { error: updateError } = await serviceClient
-          .from("profiles")
-          .update({ 
-            cart_data: updatedCart,
-            phone: cleanedPhone // Ensure the phone number is stored in the profile
-          })
-          .eq("id", existingUserId);
+      const serviceClient = createServiceClient();
 
-        if (updateError) return { error: updateError.message };
+      // 1. Search if a profile already has this phone number
+      let existingUserId: string | null = null;
+      let existingProfile = null;
+
+      const { data: profile } = await serviceClient
+        .from("profiles")
+        .select("id, cart_data")
+        .eq("phone", cleanedPhone)
+        .maybeSingle();
+
+      if (profile) {
+        existingUserId = profile.id;
+        existingProfile = profile;
       } else {
-        // Insert profile for the existing auth user
+        // 2. Fallback: Check if user exists in auth.users by listing users
+        const { data: userData } = await serviceClient.auth.admin.listUsers();
+        const matchedUser = (userData?.users || []).find(
+          (u) => 
+            u.phone === cleanedPhone || 
+            u.phone === `+${cleanedPhone}` || 
+            u.phone?.replace(/\D/g, "") === cleanedPhone
+        );
+        if (matchedUser) {
+          existingUserId = matchedUser.id;
+          
+          // Check if they have a profile under that ID
+          const { data: prof } = await serviceClient
+            .from("profiles")
+            .select("id, cart_data")
+            .eq("id", existingUserId)
+            .maybeSingle();
+          existingProfile = prof;
+        }
+      }
+
+      if (existingUserId) {
+        const currentCart = existingProfile?.cart_data && typeof existingProfile.cart_data === "object" ? existingProfile.cart_data : {};
+        const updatedCart = {
+          ...currentCart,
+          whatsapp_otp: otp,
+          whatsapp_otp_expires: expires,
+        };
+
+        if (existingProfile) {
+          // Update profile
+          const { error: updateError } = await serviceClient
+            .from("profiles")
+            .update({ 
+              cart_data: updatedCart,
+              phone: cleanedPhone // Ensure the phone number is stored in the profile
+            })
+            .eq("id", existingUserId);
+
+          if (updateError) return { error: updateError.message };
+        } else {
+          // Insert profile for the existing auth user
+          const { error: insertError } = await serviceClient
+            .from("profiles")
+            .insert({
+              id: existingUserId,
+              phone: cleanedPhone,
+              role: "customer",
+              cart_data: updatedCart,
+            });
+
+          if (insertError) return { error: insertError.message };
+        }
+      } else {
+        // 3. User is brand new! Create both Auth User and Profile
+        const tempPass = crypto.randomUUID(); // secure random key
+        const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
+          phone: cleanedPhone,
+          phone_confirm: true,
+          password: tempPass,
+          user_metadata: { role: "customer" },
+        });
+
+        if (createError) {
+          return { error: createError.message };
+        }
+
+        // Now insert the profile safely using the generated user ID
         const { error: insertError } = await serviceClient
           .from("profiles")
           .insert({
-            id: existingUserId,
+            id: newUser.user.id,
             phone: cleanedPhone,
             role: "customer",
-            cart_data: updatedCart,
+            cart_data: {
+              whatsapp_otp: otp,
+              whatsapp_otp_expires: expires,
+            },
           });
 
         if (insertError) return { error: insertError.message };
       }
-    } else {
-      // 3. User is brand new! Create both Auth User and Profile
-      const tempPass = crypto.randomUUID(); // secure random key
-      const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
-        phone: cleanedPhone,
-        phone_confirm: true,
-        password: tempPass,
-        user_metadata: { role: "customer" },
+
+      // Send the OTP via WhatsApp
+      console.log(`🔑 [OTP SYSTEM] Generated code for WhatsApp OTP login: ${otp} (sent to ${cleanedPhone})`);
+      const whatsappResult = await sendWhatsAppMessage({
+        recipientPhone: cleanedPhone,
+        templateName: "auth_otp_omh",
+        parameters: [otp],
       });
 
-      if (createError) {
-        return { error: createError.message };
+      // We do NOT fail the operation if Meta API is unconfigured/sandbox mode during development
+      // This ensures local testing works perfectly using the console logs!
+      if (!whatsappResult.success && env.NODE_ENV === "production") {
+        return { error: whatsappResult.error || "Failed to deliver WhatsApp message." };
       }
-
-      // Now insert the profile safely using the generated user ID
-      const { error: insertError } = await serviceClient
-        .from("profiles")
-        .insert({
-          id: newUser.user.id,
-          phone: cleanedPhone,
-          role: "customer",
-          cart_data: {
-            whatsapp_otp: otp,
-            whatsapp_otp_expires: expires,
-          },
-        });
-
-      if (insertError) return { error: insertError.message };
     }
 
-    // Send the OTP via WhatsApp
-    console.log(`🔑 [OTP SYSTEM] Generated code for WhatsApp OTP login: ${otp} (sent to ${cleanedPhone})`);
-    const whatsappResult = await sendWhatsAppMessage({
-      recipientPhone: cleanedPhone,
-      templateName: "auth_otp_omh",
-      parameters: [otp],
-    });
-
-    // We do NOT fail the operation if Meta API is unconfigured/sandbox mode during development
-    // This ensures local testing works perfectly using the console logs!
-    if (!whatsappResult.success && env.NODE_ENV === "production") {
-      return { error: whatsappResult.error || "Failed to deliver WhatsApp message." };
-    }
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ [OTP ERROR] signInWithOTP exception:", error);
+    return { error: error?.message || "An unexpected error occurred during OTP request." };
   }
-
-  return { success: true };
 }
 
 export async function verifyOTP(identifier: string, token: string, type: "email" | "phone" = "email") {
-  if (type === "email") {
-    const supabase = await createClient();
-    const verifyParams = { email: identifier, token, type: "email" as const };
-    const { error } = await supabase.auth.verifyOtp(verifyParams);
-    if (error) return { error: error.message };
-  } else {
-    // Custom WhatsApp OTP verification flow
-    const cleanedPhone = formatWhatsAppPhone(identifier);
-    if (!cleanedPhone) {
-      return { error: "Invalid phone number." };
-    }
-
-    const serviceClient = createServiceClient();
-
-    const { data: profile } = await serviceClient
-      .from("profiles")
-      .select("id, cart_data")
-      .eq("phone", cleanedPhone)
-      .maybeSingle();
-
-    if (!profile) {
-      return { error: "No pending OTP request found." };
-    }
-
-    const cartData = profile.cart_data && typeof profile.cart_data === "object" ? (profile.cart_data as Record<string, any>) : null;
-    const storedOtp = cartData?.whatsapp_otp;
-    const expires = cartData?.whatsapp_otp_expires;
-
-    if (!storedOtp || !expires) {
-      return { error: "No pending OTP request found." };
-    }
-
-    if (new Date(expires).getTime() < Date.now()) {
-      return { error: "OTP code has expired." };
-    }
-
-    if (storedOtp !== token) {
-      return { error: "Invalid OTP code." };
-    }
-
-    // Clear the OTP fields in database
-    const updatedCart = { ...cartData };
-    delete updatedCart.whatsapp_otp;
-    delete updatedCart.whatsapp_otp_expires;
-
-    await serviceClient
-      .from("profiles")
-      .update({ cart_data: updatedCart })
-      .eq("id", profile.id);
-
-    // Proceed to securely establish a Supabase Auth session for this user
-    try {
-      const tempPassword = crypto.randomBytes(16).toString("hex");
-
-      // Check if user exists in auth.users
-      const { data: { user: authUser }, error: getAuthError } = await serviceClient.auth.admin.getUserById(profile.id);
-
-      if (!authUser || getAuthError) {
-        // Create user with corresponding profile ID
-        const { error: createError } = await serviceClient.auth.admin.createUser({
-          id: profile.id,
-          phone: cleanedPhone,
-          phone_confirm: true,
-          password: tempPassword,
-          user_metadata: { role: "customer" },
-        });
-
-        if (createError) throw new Error(createError.message);
-      } else {
-        // Update user password to temporary password
-        const { error: updateError } = await serviceClient.auth.admin.updateUserById(profile.id, {
-          password: tempPassword,
-        });
-
-        if (updateError) throw new Error(updateError.message);
+  try {
+    if (type === "email") {
+      const supabase = await createClient();
+      const verifyParams = { email: identifier, token, type: "email" as const };
+      const { error } = await supabase.auth.verifyOtp(verifyParams);
+      if (error) return { error: error.message };
+    } else {
+      // Custom WhatsApp OTP verification flow
+      const cleanedPhone = formatWhatsAppPhone(identifier);
+      if (!cleanedPhone) {
+        return { error: "Invalid phone number." };
       }
 
-      // Log user in using standard client (setting standard secure cookies)
-      const userSupabase = await createClient();
-      const { error: signInError } = await userSupabase.auth.signInWithPassword({
-        phone: cleanedPhone,
-        password: tempPassword,
-      });
+      const serviceClient = createServiceClient();
 
-      if (signInError) throw new Error(signInError.message);
+      const { data: profile } = await serviceClient
+        .from("profiles")
+        .select("id, cart_data")
+        .eq("phone", cleanedPhone)
+        .maybeSingle();
 
-    } catch (authErr) {
-      return { error: authErr instanceof Error ? authErr.message : "Authentication session creation failed." };
+      if (!profile) {
+        return { error: "No pending OTP request found." };
+      }
+
+      const cartData = profile.cart_data && typeof profile.cart_data === "object" ? (profile.cart_data as Record<string, any>) : null;
+      const storedOtp = cartData?.whatsapp_otp;
+      const expires = cartData?.whatsapp_otp_expires;
+
+      if (!storedOtp || !expires) {
+        return { error: "No pending OTP request found." };
+      }
+
+      if (new Date(expires).getTime() < Date.now()) {
+        return { error: "OTP code has expired." };
+      }
+
+      if (storedOtp !== token) {
+        return { error: "Invalid OTP code." };
+      }
+
+      // Clear the OTP fields in database
+      const updatedCart = { ...cartData };
+      delete updatedCart.whatsapp_otp;
+      delete updatedCart.whatsapp_otp_expires;
+
+      await serviceClient
+        .from("profiles")
+        .update({ cart_data: updatedCart })
+        .eq("id", profile.id);
+
+      // Proceed to securely establish a Supabase Auth session for this user
+      try {
+        const tempPassword = crypto.randomBytes(16).toString("hex");
+
+        // Safe getUserById check to prevent throwing unhandled exceptions
+        let authUser = null;
+        try {
+          const { data, error: getAuthError } = await serviceClient.auth.admin.getUserById(profile.id);
+          if (data && !getAuthError) {
+            authUser = data.user;
+          }
+        } catch {
+          // User not found in auth.users
+        }
+
+        if (!authUser) {
+          // Create user with corresponding profile ID
+          const { error: createError } = await serviceClient.auth.admin.createUser({
+            id: profile.id,
+            phone: cleanedPhone,
+            phone_confirm: true,
+            password: tempPassword,
+            user_metadata: { role: "customer" },
+          });
+
+          if (createError) throw new Error(createError.message);
+        } else {
+          // Update user password to temporary password
+          const { error: updateError } = await serviceClient.auth.admin.updateUserById(profile.id, {
+            password: tempPassword,
+          });
+
+          if (updateError) throw new Error(updateError.message);
+        }
+
+        // Log user in using standard client (setting standard secure cookies)
+        const userSupabase = await createClient();
+        const { error: signInError } = await userSupabase.auth.signInWithPassword({
+          phone: cleanedPhone,
+          password: tempPassword,
+        });
+
+        if (signInError) throw new Error(signInError.message);
+
+      } catch (authErr) {
+        return { error: authErr instanceof Error ? authErr.message : "Authentication session creation failed." };
+      }
     }
-  }
 
-  return { success: true };
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ [OTP ERROR] verifyOTP exception:", error);
+    return { error: error?.message || "An unexpected error occurred during OTP verification." };
+  }
 }

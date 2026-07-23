@@ -180,6 +180,7 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
       const expires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes validity
 
       const serviceClient = createServiceClient();
+      const virtualEmail = `${cleanedPhone}@omh-auth.local`;
 
       // 1. Search if a profile already has this phone number
       let existingUserId: string | null = null;
@@ -195,24 +196,23 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
         existingUserId = profile.id;
         existingProfile = profile;
       } else {
-        // 2. Fallback: Check if user exists in auth.users by listing users
-        const { data: userData } = await serviceClient.auth.admin.listUsers();
-        const matchedUser = (userData?.users || []).find(
-          (u) => 
-            u.phone === cleanedPhone || 
-            u.phone === `+${cleanedPhone}` || 
-            u.phone?.replace(/\D/g, "") === cleanedPhone
-        );
-        if (matchedUser) {
-          existingUserId = matchedUser.id;
-          
-          // Check if they have a profile under that ID
-          const { data: prof } = await serviceClient
-            .from("profiles")
-            .select("id, cart_data")
-            .eq("id", existingUserId)
-            .maybeSingle();
-          existingProfile = prof;
+        // 2. Fallback: Check if user exists in auth.users by virtual email
+        try {
+          const { data: userData } = await serviceClient.auth.admin.listUsers();
+          const matchedUser = (userData?.users || []).find((u) => u.email === virtualEmail);
+          if (matchedUser) {
+            existingUserId = matchedUser.id;
+            
+            // Check if they have a profile under that ID
+            const { data: prof } = await serviceClient
+              .from("profiles")
+              .select("id, cart_data")
+              .eq("id", matchedUser.id)
+              .maybeSingle();
+            existingProfile = prof;
+          }
+        } catch {
+          // Not found
         }
       }
 
@@ -249,11 +249,11 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
           if (insertError) return { error: insertError.message };
         }
       } else {
-        // 3. User is brand new! Create both Auth User and Profile
+        // 3. User is brand new! Create both Auth User and Profile using virtual email
         const tempPass = crypto.randomUUID(); // secure random key
         const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
-          phone: cleanedPhone,
-          phone_confirm: true,
+          email: virtualEmail,
+          email_confirm: true,
           password: tempPass,
           user_metadata: { role: "customer" },
         });
@@ -315,6 +315,7 @@ export async function verifyOTP(identifier: string, token: string, type: "email"
       }
 
       const serviceClient = createServiceClient();
+      const virtualEmail = `${cleanedPhone}@omh-auth.local`;
 
       const { data: profile } = await serviceClient
         .from("profiles")
@@ -356,12 +357,15 @@ export async function verifyOTP(identifier: string, token: string, type: "email"
       try {
         const tempPassword = crypto.randomBytes(16).toString("hex");
 
-        // Safe getUserById check to prevent throwing unhandled exceptions
+        // Safe check to verify if user exists in auth.users
         let authUser = null;
         try {
-          const { data, error: getAuthError } = await serviceClient.auth.admin.getUserById(profile.id);
-          if (data && !getAuthError) {
-            authUser = data.user;
+          const { data: userData, error: getAuthError } = await serviceClient.auth.admin.listUsers();
+          if (userData && !getAuthError) {
+            const matched = (userData.users || []).find((u) => u.email === virtualEmail);
+            if (matched) {
+              authUser = matched;
+            }
           }
         } catch {
           // User not found in auth.users
@@ -371,8 +375,8 @@ export async function verifyOTP(identifier: string, token: string, type: "email"
           // Create user with corresponding profile ID
           const { error: createError } = await serviceClient.auth.admin.createUser({
             id: profile.id,
-            phone: cleanedPhone,
-            phone_confirm: true,
+            email: virtualEmail,
+            email_confirm: true,
             password: tempPassword,
             user_metadata: { role: "customer" },
           });
@@ -390,7 +394,7 @@ export async function verifyOTP(identifier: string, token: string, type: "email"
         // Log user in using standard client (setting standard secure cookies)
         const userSupabase = await createClient();
         const { error: signInError } = await userSupabase.auth.signInWithPassword({
-          phone: cleanedPhone,
+          email: virtualEmail,
           password: tempPassword,
         });
 

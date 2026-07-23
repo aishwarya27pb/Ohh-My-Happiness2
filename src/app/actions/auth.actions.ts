@@ -180,7 +180,10 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
 
     const serviceClient = createServiceClient();
 
-    // Look up if a profile with this phone number exists
+    // 1. Search if a profile already has this phone number
+    let existingUserId: string | null = null;
+    let existingProfile = null;
+
     const { data: profile } = await serviceClient
       .from("profiles")
       .select("id, cart_data")
@@ -188,21 +191,64 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
       .maybeSingle();
 
     if (profile) {
-      const currentCart = profile.cart_data && typeof profile.cart_data === "object" ? profile.cart_data : {};
+      existingUserId = profile.id;
+      existingProfile = profile;
+    } else {
+      // 2. Fallback: Check if user exists in auth.users by listing users
+      const { data: userData } = await serviceClient.auth.admin.listUsers();
+      const matchedUser = (userData?.users || []).find(
+        (u) => 
+          u.phone === cleanedPhone || 
+          u.phone === `+${cleanedPhone}` || 
+          u.phone?.replace(/\D/g, "") === cleanedPhone
+      );
+      if (matchedUser) {
+        existingUserId = matchedUser.id;
+        
+        // Check if they have a profile under that ID
+        const { data: prof } = await serviceClient
+          .from("profiles")
+          .select("id, cart_data")
+          .eq("id", existingUserId)
+          .maybeSingle();
+        existingProfile = prof;
+      }
+    }
+
+    if (existingUserId) {
+      const currentCart = existingProfile?.cart_data && typeof existingProfile.cart_data === "object" ? existingProfile.cart_data : {};
       const updatedCart = {
         ...currentCart,
         whatsapp_otp: otp,
         whatsapp_otp_expires: expires,
       };
 
-      const { error: updateError } = await serviceClient
-        .from("profiles")
-        .update({ cart_data: updatedCart })
-        .eq("id", profile.id);
+      if (existingProfile) {
+        // Update profile
+        const { error: updateError } = await serviceClient
+          .from("profiles")
+          .update({ 
+            cart_data: updatedCart,
+            phone: cleanedPhone // Ensure the phone number is stored in the profile
+          })
+          .eq("id", existingUserId);
 
-      if (updateError) return { error: updateError.message };
+        if (updateError) return { error: updateError.message };
+      } else {
+        // Insert profile for the existing auth user
+        const { error: insertError } = await serviceClient
+          .from("profiles")
+          .insert({
+            id: existingUserId,
+            phone: cleanedPhone,
+            role: "customer",
+            cart_data: updatedCart,
+          });
+
+        if (insertError) return { error: insertError.message };
+      }
     } else {
-      // Create the Auth User first to avoid violating foreign key constraints
+      // 3. User is brand new! Create both Auth User and Profile
       const tempPass = crypto.randomUUID(); // secure random key
       const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
         phone: cleanedPhone,

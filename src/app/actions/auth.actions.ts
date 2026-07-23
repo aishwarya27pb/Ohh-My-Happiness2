@@ -202,12 +202,24 @@ export async function signInWithOTP(identifier: string, type: "email" | "phone" 
 
       if (updateError) return { error: updateError.message };
     } else {
-      // Create a temporary profile with a new UUID
-      const newProfileId = crypto.randomUUID();
+      // Create the Auth User first to avoid violating foreign key constraints
+      const tempPass = crypto.randomUUID(); // secure random key
+      const { data: newUser, error: createError } = await serviceClient.auth.admin.createUser({
+        phone: cleanedPhone,
+        phone_confirm: true,
+        password: tempPass,
+        user_metadata: { role: "customer" },
+      });
+
+      if (createError) {
+        return { error: createError.message };
+      }
+
+      // Now insert the profile safely using the generated user ID
       const { error: insertError } = await serviceClient
         .from("profiles")
         .insert({
-          id: newProfileId,
+          id: newUser.user.id,
           phone: cleanedPhone,
           role: "customer",
           cart_data: {

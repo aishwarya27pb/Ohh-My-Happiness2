@@ -324,12 +324,6 @@ export async function verifyOTP(identifier: string, token: string, type: "email"
 
       if (signInError) throw new Error(signInError.message);
 
-      // Overwrite the password to prevent reuse
-      const secureRandomPassword = crypto.randomBytes(32).toString("hex");
-      await serviceClient.auth.admin.updateUserById(profile.id, {
-        password: secureRandomPassword,
-      });
-
     } catch (authErr) {
       return { error: authErr instanceof Error ? authErr.message : "Authentication session creation failed." };
     }

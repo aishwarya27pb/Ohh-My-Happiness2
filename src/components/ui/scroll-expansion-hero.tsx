@@ -212,14 +212,16 @@ const ScrollExpandMedia = ({
 
   // Compute sub-animations values based on scrollProgress (0 to 1)
   const ribbonOpacity = Math.max(0, 1 - scrollProgress * 5); // Fades out first
-  const ribbonX = scrollProgress * -100;
+  const ribbonX = scrollProgress * -120;
   
-  const lidY = scrollProgress * -250;
-  const lidRotate = scrollProgress * -15;
-  const lidOpacity = Math.max(0, 1 - scrollProgress * 2.5); // Fades out mid-scroll
+  const lidY = scrollProgress * -380; // Lift high up
+  const lidRotate = scrollProgress * -15; // Pivot lid slightly
+  const lidScale = 1 + scrollProgress * 0.08; // Scaling up slightly
+  const lidOpacity = Math.max(0, 1 - scrollProgress * 2.2);
 
-  const baseY = scrollProgress * 150;
-  const baseOpacity = Math.max(0, 1 - scrollProgress * 2.5); // Fades out mid-scroll
+  const baseY = scrollProgress * 15; // Kept base almost stationary
+  const baseScale = 1 - scrollProgress * 0.02; // Keep base solid
+  const baseOpacity = Math.max(0, 1 - scrollProgress * 1.8);
 
   const glowOpacity = scrollProgress < 0.5 ? scrollProgress * 1.6 : Math.max(0, 1 - (scrollProgress - 0.5) * 2.5);
   const glowScale = 0.5 + scrollProgress * 1.5;
@@ -362,12 +364,12 @@ const ScrollExpandMedia = ({
                   </div>
                 </div>
 
-                {/* Closed Gift Box Base (Bottom Half Clip - slides down) */}
+                 {/* Closed Gift Box Base (Bottom Half Clip - stays stationary) */}
                 {baseOpacity > 0 && (
                   <div 
                     className="absolute inset-0 z-20 pointer-events-none transition-transform duration-75"
                     style={{
-                      transform: `translateY(${baseY}px) rotate(${-lidRotate * 0.3}deg) translateX(${ribbonX * -0.1}px)`,
+                      transform: `translateY(${baseY}px) scale(${baseScale})`,
                       opacity: baseOpacity,
                     }}
                   >
@@ -377,19 +379,19 @@ const ScrollExpandMedia = ({
                       fill
                       className="object-cover"
                       style={{
-                        clipPath: "inset(48% 0px 0px 0px)",
+                        clipPath: "inset(46% 0px 0px 0px)",
                       }}
                       priority
                     />
                   </div>
                 )}
 
-                {/* Closed Gift Box Lid (Top Half Clip - slides up) */}
+                {/* Closed Gift Box Lid (Top Half Clip - lifts off) */}
                 {lidOpacity > 0 && (
                   <div
                     className="absolute inset-0 z-30 pointer-events-none transition-transform duration-75"
                     style={{
-                      transform: `translateY(${lidY}px) rotate(${lidRotate}deg) translateX(${ribbonX * 0.3}px)`,
+                      transform: `translateY(${lidY}px) rotate(${lidRotate}deg) scale(${lidScale})`,
                       opacity: lidOpacity,
                     }}
                   >
@@ -399,7 +401,7 @@ const ScrollExpandMedia = ({
                       fill
                       className="object-cover"
                       style={{
-                        clipPath: "inset(0px 0px 52% 0px)",
+                        clipPath: "inset(0px 0px 50% 0px)",
                       }}
                       priority
                     />

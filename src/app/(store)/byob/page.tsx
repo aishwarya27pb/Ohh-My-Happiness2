@@ -19,6 +19,7 @@ import { useCart } from "@/context/CartContext";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import toast from "react-hot-toast";
+import MagneticButton from "@/components/ui/MagneticButton";
 
 // --- Config ---
 const MAX_ITEMS = 6;
@@ -321,14 +322,14 @@ export default function BYOBPage() {
                 Subtotal: <span className="text-[#1A1A1A] font-black">₹{subtotal}</span>
               </div>
 
-              <button
+              <MagneticButton
                 onClick={nextStep}
                 disabled={sidebarDisabled}
                 className="w-full flex items-center justify-center gap-2 bg-amber text-white font-bold px-6 py-3 sm:py-3.5 rounded-2xl shadow-lg shadow-amber/20 hover:bg-[#E67A00] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {sidebarLabel}
                 <ArrowRight size={18} />
-              </button>
+              </MagneticButton>
             </div>
           </div>
         </div>

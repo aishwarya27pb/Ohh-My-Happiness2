@@ -94,8 +94,16 @@ export default function SparkleTrail() {
       spawnSparkle(touch.clientX, touch.clientY);
     };
 
+    const handleMouseDown = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      for (let i = 0; i < 8; i++) {
+        spawnSparkle(clientX, clientY);
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("mousedown", handleMouseDown, { passive: true });
 
     // Draw a 4-pointed sparkle star with contrast drop-shadow and thin outline
     const drawSparkleStar = (
@@ -193,6 +201,7 @@ export default function SparkleTrail() {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("mousedown", handleMouseDown);
       cancelAnimationFrame(animationId);
     };
   }, []);

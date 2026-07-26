@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import MagneticButton from "@/components/ui/MagneticButton";
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
@@ -275,18 +276,16 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
           {/* Buttons */}
           <div className="flex gap-3 mb-8">
-            <motion.button
-              whileHover={{ scale: 1.02, boxShadow: "0 10px 25px -5px rgba(255, 138, 0, 0.2)" }}
-              whileTap={{ scale: 0.98 }}
+            <MagneticButton
               onClick={handleAddToCart}
               className={`flex-1 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                 added
-                  ? "bg-green-500 text-white shadow-lg"
-                  : "bg-[#FFB449] text-[#1A1A1A] hover:bg-[#FF8A00] hover:text-white shadow-md"
+                  ? "bg-green-500 text-white shadow-lg shadow-green-500/10"
+                  : "bg-[#FFB449] text-[#1A1A1A] hover:bg-[#FF8A00] hover:text-white shadow-md shadow-[#FFB449]/10"
               }`}
             >
               {added ? <><Check size={18} /> Added!</> : <><ShoppingCart size={18} /> Add to Cart</>}
-            </motion.button>
+            </MagneticButton>
 
             <motion.button
               whileHover={{ scale: 1.1, backgroundColor: "#FFE4C2" }}

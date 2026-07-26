@@ -31,6 +31,8 @@ export default function Header() {
   const { count: wishlistCount } = useWishlist();
 
   useEffect(() => {
+    if (!searchOpen || products.length > 0) return;
+
     async function loadProducts() {
       const supabase = createClient();
       const { data } = await supabase.from("products").select("id,name,slug,price,category_slug,tags");
@@ -39,7 +41,7 @@ export default function Header() {
       }
     }
     loadProducts();
-  }, []);
+  }, [searchOpen, products.length]);
 
   useEffect(() => {
     setMounted(true);

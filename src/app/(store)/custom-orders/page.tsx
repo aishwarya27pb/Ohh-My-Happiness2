@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { CheckCircle, Upload, Phone, Mail, Building2, Package, MessageSquare } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { createLeadAction } from "@/app/actions/leads.actions";
 import Select from "@/components/ui/Select";
+import InteractiveBoxPreview from "@/components/ui/InteractiveBoxPreview";
+import MagneticButton from "@/components/ui/MagneticButton";
 
 const features = [
   { icon: "🎨", title: "Full Customization", desc: "Your logo, colors, message, and design on every item" },
@@ -34,6 +36,19 @@ export default function CustomOrdersPage() {
     hasLogo: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState("navy");
+  const [brandingStyle, setBrandingStyle] = useState("gold_foil");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLogoUrl(URL.createObjectURL(file));
+      setForm((f) => ({ ...f, hasLogo: true }));
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const val = e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value;
@@ -140,9 +155,9 @@ export default function CustomOrdersPage() {
         </div>
       </section>
 
-      {/* Form */}
+      {/* Form & Customizer Split Section */}
       <section className="section-padding bg-[#FFF9EE]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SectionHeader
             eyebrow="Get a Quote"
             title="Request Custom "
@@ -150,144 +165,173 @@ export default function CustomOrdersPage() {
             subtitle="Fill in the details below and our team will respond within 24 hours."
           />
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-[#FFE4C2] space-y-6 shadow-sm">
-            {/* Contact Info */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 size={18} className="text-[#FFB449]" />
-                <h3 className="font-bold text-[#1A1A1A]">Your Details</h3>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Your Name *</label>
-                  <input name="name" value={form.name} onChange={handleChange} placeholder="Priya Sharma" className={inputClass("name")} />
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Company Name</label>
-                  <input name="company" value={form.company} onChange={handleChange} placeholder="TechCorp India" className={inputClass("company")} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Email *</label>
-                  <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="priya@company.com" className={inputClass("email")} />
-                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Phone *</label>
-                  <input name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="+91 99999 99999" className={inputClass("phone")} />
-                  {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
-                </div>
-              </div>
-            </div>
-
-            {/* Order Details */}
-            <div className="border-t border-[#FFE4C2] pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Package size={18} className="text-[#FFB449]" />
-                <h3 className="font-bold text-[#1A1A1A]">Order Details</h3>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Select
-                  label="Gift Category"
-                  options={categories.map(c => ({ value: c, label: c }))}
-                  value={form.category}
-                  onChange={(val) => setForm(f => ({ ...f, category: val }))}
-                  placeholder="Select category"
-                />
-                <Select
-                  label="Occasion"
-                  options={occasions.map(o => ({ value: o, label: o }))}
-                  value={form.occasion}
-                  onChange={(val) => setForm(f => ({ ...f, occasion: val }))}
-                  placeholder="Select occasion"
-                />
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Quantity *</label>
-                  <input name="quantity" type="number" min="10" value={form.quantity} onChange={handleChange} placeholder="e.g. 100" className={inputClass("quantity")} />
-                  {errors.quantity && <p className="text-xs text-red-500 mt-1">{errors.quantity}</p>}
-                  <p className="text-xs text-[#6B6B6B] mt-1">Minimum 10 units</p>
-                </div>
-                <Select
-                  label="Budget per Unit"
-                  options={[
-                    { value: "Under ₹500", label: "Under ₹500" },
-                    { value: "₹500 – ₹1,000", label: "₹500 – ₹1,000" },
-                    { value: "₹1,000 – ₹2,500", label: "₹1,000 – ₹2,500" },
-                    { value: "₹2,500 – ₹5,000", label: "₹2,500 – ₹5,000" },
-                    { value: "Above ₹5,000", label: "Above ₹5,000" },
-                  ]}
-                  value={form.budget}
-                  onChange={(val) => setForm(f => ({ ...f, budget: val }))}
-                  placeholder="Select budget"
-                />
-                <div>
-                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Required By</label>
-                  <input name="deadline" type="date" value={form.deadline} onChange={handleChange} className={inputClass("deadline")} />
-                </div>
-              </div>
-            </div>
-
-            {/* Requirements */}
-            <div className="border-t border-[#FFE4C2] pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <MessageSquare size={18} className="text-[#FFB449]" />
-                <h3 className="font-bold text-[#1A1A1A]">Your Requirements</h3>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 items-start mt-10">
+            {/* Form Column */}
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-[#FFE4C2] space-y-6 shadow-sm">
+              {/* Contact Info */}
               <div>
-                <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Describe your requirements *</label>
-                <textarea
-                  name="requirements"
-                  value={form.requirements}
-                  onChange={handleChange}
-                  placeholder="Describe what you're looking for — type of gifts, branding requirements, special instructions, delivery locations, etc."
-                  rows={5}
-                  className={`${inputClass("requirements")} resize-none`}
-                />
-                {errors.requirements && <p className="text-xs text-red-500 mt-1">{errors.requirements}</p>}
-              </div>
-
-              {/* Logo Upload */}
-              <div className="mt-4">
-                <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Upload Logo / Reference (optional)</label>
-                <div className="border-2 border-dashed border-[#FFE4C2] rounded-2xl p-6 text-center hover:border-[#FFB449] transition-colors cursor-pointer">
-                  <Upload size={24} className="text-[#FFB449] mx-auto mb-2" />
-                  <p className="text-sm text-[#6B6B6B]">Drag & drop or click to upload</p>
-                  <p className="text-xs text-[#6B6B6B] mt-1">PNG, JPG, PDF up to 10MB</p>
-                  <input type="file" className="hidden" accept=".png,.jpg,.jpeg,.pdf" />
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 size={18} className="text-[#FFB449]" />
+                  <h3 className="font-bold text-[#1A1A1A]">Your Details</h3>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Your Name *</label>
+                    <input name="name" value={form.name} onChange={handleChange} placeholder="Priya Sharma" className={inputClass("name")} />
+                    {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Company Name</label>
+                    <input name="company" value={form.company} onChange={handleChange} placeholder="TechCorp India" className={inputClass("company")} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Email *</label>
+                    <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="priya@company.com" className={inputClass("email")} />
+                    {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Phone *</label>
+                    <input name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="+91 99999 99999" className={inputClass("phone")} />
+                    {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mt-4">
-                <input
-                  type="checkbox"
-                  id="hasLogo"
-                  name="hasLogo"
-                  checked={form.hasLogo}
-                  onChange={handleChange}
-                  className="accent-[#FFB449] w-4 h-4"
-                />
-                <label htmlFor="hasLogo" className="text-sm text-[#6B6B6B]">
-                  I want custom branding / logo on the gifts
-                </label>
+              {/* Order Details */}
+              <div className="border-t border-[#FFE4C2] pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Package size={18} className="text-[#FFB449]" />
+                  <h3 className="font-bold text-[#1A1A1A]">Order Details</h3>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Select
+                    label="Gift Category"
+                    options={categories.map(c => ({ value: c, label: c }))}
+                    value={form.category}
+                    onChange={(val) => setForm(f => ({ ...f, category: val }))}
+                    placeholder="Select category"
+                  />
+                  <Select
+                    label="Occasion"
+                    options={occasions.map(o => ({ value: o, label: o }))}
+                    value={form.occasion}
+                    onChange={(val) => setForm(f => ({ ...f, occasion: val }))}
+                    placeholder="Select occasion"
+                  />
+                  <div>
+                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Quantity *</label>
+                    <input name="quantity" type="number" min="10" value={form.quantity} onChange={handleChange} placeholder="e.g. 100" className={inputClass("quantity")} />
+                    {errors.quantity && <p className="text-xs text-red-500 mt-1">{errors.quantity}</p>}
+                    <p className="text-xs text-[#6B6B6B] mt-1">Minimum 10 units</p>
+                  </div>
+                  <Select
+                    label="Budget per Unit"
+                    options={[
+                      { value: "Under ₹500", label: "Under ₹500" },
+                      { value: "₹500 – ₹1,000", label: "₹500 – ₹1,000" },
+                      { value: "₹1,000 – ₹2,500", label: "₹1,000 – ₹2,500" },
+                      { value: "₹2,500 – ₹5,000", label: "₹2,500 – ₹5,000" },
+                      { value: "Above ₹5,000", label: "Above ₹5,000" },
+                    ]}
+                    value={form.budget}
+                    onChange={(val) => setForm(f => ({ ...f, budget: val }))}
+                    placeholder="Select budget"
+                  />
+                  <div>
+                    <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Required By</label>
+                    <input name="deadline" type="date" value={form.deadline} onChange={handleChange} className={inputClass("deadline")} />
+                  </div>
+                </div>
               </div>
+
+              {/* Requirements */}
+              <div className="border-t border-[#FFE4C2] pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <MessageSquare size={18} className="text-[#FFB449]" />
+                  <h3 className="font-bold text-[#1A1A1A]">Your Requirements</h3>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Describe your requirements *</label>
+                  <textarea
+                    name="requirements"
+                    value={form.requirements}
+                    onChange={handleChange}
+                    placeholder="Describe what you're looking for — type of gifts, branding requirements, special instructions, delivery locations, etc."
+                    rows={5}
+                    className={`${inputClass("requirements")} resize-none`}
+                  />
+                  {errors.requirements && <p className="text-xs text-red-500 mt-1">{errors.requirements}</p>}
+                </div>
+
+                {/* Logo Upload */}
+                <div className="mt-4">
+                  <label className="text-xs font-bold text-[#1A1A1A] mb-1 block">Upload Logo / Reference (optional)</label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-[#FFE4C2] rounded-2xl p-6 text-center hover:border-[#FFB449] transition-colors cursor-pointer"
+                  >
+                    <Upload size={24} className="text-[#FFB449] mx-auto mb-2" />
+                    <p className="text-sm text-[#6B6B6B]">Drag & drop or click to upload</p>
+                    <p className="text-xs text-[#6B6B6B] mt-1">PNG, JPG, PDF up to 10MB</p>
+                    <input 
+                      ref={fileInputRef}
+                      type="file" 
+                      className="hidden" 
+                      accept=".png,.jpg,.jpeg,.pdf" 
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 mt-4">
+                  <input
+                    type="checkbox"
+                    id="hasLogo"
+                    name="hasLogo"
+                    checked={form.hasLogo}
+                    onChange={handleChange}
+                    className="accent-[#FFB449] w-4 h-4"
+                  />
+                  <label htmlFor="hasLogo" className="text-sm text-[#6B6B6B]">
+                    I want custom branding / logo on the gifts
+                  </label>
+                </div>
+              </div>
+
+              {submitError && (
+                <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">
+                  {submitError}
+                </div>
+              )}
+
+              <MagneticButton 
+                type="submit" 
+                className="btn-primary w-full text-base py-4 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting…" : "Submit Request — Get Free Quote"}
+              </MagneticButton>
+
+              <p className="text-center text-xs text-[#6B6B6B]">
+                Or reach us directly:{" "}
+                <a href="tel:+919999999999" className="text-[#FF8A00] font-bold hover:underline">+91 99999 99999</a>
+                {" · "}
+                <a href="mailto:hello@ohhmyhappiness.com" className="text-[#FF8A00] font-bold hover:underline">hello@ohhmyhappiness.com</a>
+              </p>
+            </form>
+
+            {/* Customizer Column */}
+            <div className="lg:sticky lg:top-24">
+              <InteractiveBoxPreview
+                selectedColorId={selectedColor}
+                onColorSelect={setSelectedColor}
+                hasLogo={form.hasLogo}
+                logoUrl={logoUrl}
+                brandingStyle={brandingStyle}
+                onBrandingStyleSelect={setBrandingStyle}
+              />
             </div>
-
-            {submitError && (
-              <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">
-                {submitError}
-              </div>
-            )}
-            <button type="submit" className="btn-primary w-full text-base py-4 disabled:opacity-60 disabled:cursor-not-allowed" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting…" : "Submit Request — Get Free Quote"}
-            </button>
-
-            <p className="text-center text-xs text-[#6B6B6B]">
-              Or reach us directly:{" "}
-              <a href="tel:+919999999999" className="text-[#FF8A00] font-bold hover:underline">+91 99999 99999</a>
-              {" · "}
-              <a href="mailto:hello@ohhmyhappiness.com" className="text-[#FF8A00] font-bold hover:underline">hello@ohhmyhappiness.com</a>
-            </p>
-          </form>
+          </div>
         </div>
       </section>
 

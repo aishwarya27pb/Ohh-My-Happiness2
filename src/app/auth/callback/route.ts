@@ -8,21 +8,50 @@ export async function GET(request: Request) {
   // if "next" is in param, use it as the redirect URL
   const next = searchParams.get("next") ?? "/";
 
+  const flow = searchParams.get("flow");
+  const isOAuth = flow === "oauth";
+  const isAdminOAuth = flow === "admin-oauth";
+
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       const isPasswordReset = next.includes("reset-password");
       
-      // Only sign out if it's NOT a password reset
-      if (!isPasswordReset) {
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const isLocalEnv = process.env.NODE_ENV === "development";
+
+      // 1. Handle Admin OAuth Verification
+      if (isAdminOAuth) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          return NextResponse.redirect(`${origin}/admin/login?error=access_denied`);
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role !== "admin") {
+          await supabase.auth.signOut();
+          const targetPath = "/admin/login?error=access_denied";
+          return NextResponse.redirect(isLocalEnv ? `${origin}${targetPath}` : (forwardedHost ? `https://${forwardedHost}${targetPath}` : `${origin}${targetPath}`));
+        }
+
+        const targetPath = "/admin";
+        return NextResponse.redirect(isLocalEnv ? `${origin}${targetPath}` : (forwardedHost ? `https://${forwardedHost}${targetPath}` : `${origin}${targetPath}`));
+      }
+      
+      // 2. Handle normal Customer OAuth or Email Link
+      // Do NOT sign out if it's a password reset OR if we are on an OAuth SSO flow
+      if (!isPasswordReset && !isOAuth) {
         await supabase.auth.signOut();
       }
       
-      const forwardedHost = request.headers.get("x-forwarded-host");
-      const isLocalEnv = process.env.NODE_ENV === "development";
-      
-      let redirectPath = isPasswordReset ? next : "/auth/login?verified=true";
+      // For OAuth flows, redirect directly to the target destination (next). Otherwise redirect to password reset or login success.
+      let redirectPath = isOAuth ? next : (isPasswordReset ? next : "/auth/login?verified=true");
       
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${redirectPath}`);

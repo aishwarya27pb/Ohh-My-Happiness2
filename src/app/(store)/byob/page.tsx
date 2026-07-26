@@ -22,7 +22,7 @@ import toast from "react-hot-toast";
 import MagneticButton from "@/components/ui/MagneticButton";
 
 // --- Config ---
-const MAX_ITEMS = 6;
+const MAX_ITEMS = 8;
 
 const BOX_TYPES = [
   { id: "luxury-wood", name: "Luxury Wooden Box", price: 500, image: "https://images.unsplash.com/photo-1549465220-1d8c9d9c6703?w=400&q=80" },
@@ -49,6 +49,11 @@ const ITEM_SHAPE: Record<string, GiftShape> = {
   pen: "pen",
   keychain: "small",
   frame: "small",
+  cookies: "mug",
+  choco: "small",
+  candle: "small",
+  soap: "small",
+  book: "card",
 };
 
 const SHAPE_SIZE: Record<GiftShape, { w: number; h: number }> = {
@@ -406,6 +411,7 @@ function Step2AddGifts({
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [isDragOver, setIsDragOver] = useState(false);
   const [showFullWarning, setShowFullWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("No space left in the box!");
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [giftItems, setGiftItems] = useState<GiftItem[]>([]);
   const [loadingGifts, setLoadingGifts] = useState(true);
@@ -465,7 +471,8 @@ function Step2AddGifts({
   const placeItem = useCallback((item: GiftItem, desiredX?: number, desiredY?: number) => {
     if (selection.items.find((i) => i.id === item.id)) return;
     if (selection.items.length >= MAX_ITEMS) {
-      toast.error("Box is full! Remove an item first.");
+      toast.error(`Box is full! Maximum of ${MAX_ITEMS} items reached.`);
+      setWarningMessage(`Maximum of ${MAX_ITEMS} items reached!`);
       flashFullWarning();
       return;
     }
@@ -477,12 +484,13 @@ function Step2AddGifts({
     const spot = findOpenSpot(w, h, placedRects, clampedX, clampedY);
     if (!spot) {
       toast.error("Not enough space — try removing an item or rearranging.");
+      setWarningMessage("No space left in the box!");
       flashFullWarning();
       return;
     }
     setPositions((prev) => ({ ...prev, [item.id]: spot }));
     setSelection({ ...selection, items: [...selection.items, item] });
-  }, [selection, placedRects, flashFullWarning, setSelection]);
+  }, [selection, placedRects, flashFullWarning, setSelection, setWarningMessage]);
 
   const repositionItem = useCallback((item: GiftItem, desiredX: number, desiredY: number) => {
     const { w, h } = SHAPE_SIZE[shapeOf(item)];
@@ -684,7 +692,7 @@ function Step2AddGifts({
                   className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 whitespace-nowrap z-50"
                 >
                   <AlertCircle size={14} />
-                  No space left in the box!
+                  {warningMessage}
                 </motion.div>
               )}
             </AnimatePresence>

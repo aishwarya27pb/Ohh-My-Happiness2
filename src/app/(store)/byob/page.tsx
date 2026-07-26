@@ -372,8 +372,8 @@ function Step1BoxSelection({
             }}
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className={`cursor-pointer group relative rounded-2xl sm:rounded-3xl border border-[#FFE4C2] overflow-hidden transition-all duration-300 ${
-              selection.box?.id === box.id ? "shadow-lg shadow-amber/20 scale-[1.02] bg-[#FAF8F5]" : "bg-white hover:border-golden/50"
+            className={`cursor-pointer group relative rounded-2xl sm:rounded-3xl border-2 overflow-hidden ${
+              selection.box?.id === box.id ? "border-amber bg-cream" : "border-gray-100 hover:border-golden"
             }`}
             style={{ transformStyle: "preserve-3d" }}
           >
@@ -408,31 +408,6 @@ function Step2AddGifts({
   setSelection: React.Dispatch<React.SetStateAction<BYOBSelection>>;
 }) {
   const isTouch = useIsTouchDevice();
-  const boxStyles = useMemo(() => {
-    switch (selection.box?.id) {
-      case "luxury-wood":
-        return {
-          borderColor: "#A17C58",
-          backgroundColor: "#FAF3E8",
-        };
-      case "classic-pink":
-        return {
-          borderColor: "#F5C3CE",
-          backgroundColor: "#FFF5F7",
-        };
-      case "eco-kraft":
-        return {
-          borderColor: "#C59B73",
-          backgroundColor: "#FBF7F2",
-        };
-      default:
-        return {
-          borderColor: "#EAD0B3",
-          backgroundColor: "#FAF8F5",
-        };
-    }
-  }, [selection.box]);
-
   const [activeCategory, setActiveCategory] = useState("All Items");
   const [isDragOver, setIsDragOver] = useState(false);
   const [showFullWarning, setShowFullWarning] = useState(false);
@@ -601,22 +576,22 @@ function Step2AddGifts({
               scale: (isDragOver ? 1.02 : 1) * boxScale,
             }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className={`rounded-[32px] border-[14px] border-solid transition-all duration-300 origin-top`}
+            className={`rounded-[28px] border-2 border-dashed transition-colors duration-200 origin-top ${
+              isDragOver ? "border-amber bg-peach/50" : "border-golden bg-cream"
+            }`}
             style={{
               width: BOX_W,
               height: BOX_H,
               position: "relative",
               transformStyle: "preserve-3d",
-              borderColor: boxStyles.borderColor,
-              backgroundColor: boxStyles.backgroundColor,
               boxShadow: isDragOver
-                ? "0 35px 70px -10px rgba(255, 138, 0, 0.3), inset 0 0 24px rgba(0,0,0,0.18)"
-                : "0 30px 60px -12px rgba(0,0,0,0.2), inset 0 0 20px rgba(0,0,0,0.12)",
+                ? "0 30px 60px -10px rgba(255, 138, 0, 0.25), inset 0 -8px 20px rgba(0,0,0,0.06)"
+                : "0 25px 50px -12px rgba(0,0,0,0.15), inset 0 -6px 16px rgba(0,0,0,0.04), inset 6px 0 12px rgba(0,0,0,0.02), inset -6px 0 12px rgba(0,0,0,0.02)",
             }}
           >
             {/* Inner wall shadows */}
-            <div className="absolute inset-0 rounded-[18px] pointer-events-none" style={{
-              boxShadow: "inset 0 10px 20px rgba(0,0,0,0.15), inset 0 -4px 10px rgba(0,0,0,0.05)",
+            <div className="absolute inset-0 rounded-[26px] pointer-events-none" style={{
+              boxShadow: "inset 0 8px 16px rgba(0,0,0,0.08), inset 0 -2px 8px rgba(255,180,73,0.1)",
             }} />
 
             {selection.items.length === 0 && (

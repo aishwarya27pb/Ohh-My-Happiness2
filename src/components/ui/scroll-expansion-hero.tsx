@@ -327,14 +327,13 @@ const ScrollExpandMedia = ({
 
               {/* 3. Central Interactive Unboxing Card */}
               <div
-                className="absolute z-10 top-[52%] sm:top-[54%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#FFF9EE] overflow-hidden flex items-center justify-center border-solid border-[#FFB449]"
+                className="absolute z-10 top-[52%] sm:top-[54%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#FFF9EE] overflow-hidden flex items-center justify-center"
                 style={{
                   width: mediaWidthStyle,
                   height: mediaHeightStyle,
                   maxWidth: "100vw",
                   maxHeight: "100vh",
                   borderRadius: borderRadius,
-                  borderWidth: borderWidth,
                   boxShadow: `0px ${25 * shadowIntensity}px ${80 * shadowIntensity}px rgba(255, 138, 0, ${0.15 * shadowIntensity})`,
                 }}
               >

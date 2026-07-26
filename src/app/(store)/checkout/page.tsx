@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { Check, CreditCard, MapPin, User } from "lucide-react";
 import { createOrderAction, createRazorpayOrderAction, verifyRazorpayPaymentAction } from "@/app/actions/orders.actions";
 import Select from "@/components/ui/Select";
+import { createClient } from "@/lib/supabase/client";
 
 const states = [
   "Maharashtra", "Delhi", "Karnataka", "Tamil Nadu", 
@@ -27,6 +28,33 @@ export default function CheckoutPage() {
   const [orderError, setOrderError] = useState<string | null>(null);
   const { state, subtotal, clearCart, discount, couponCode } = useCart();
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadUserProfile() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, phone")
+            .eq("id", user.id)
+            .single();
+
+          setForm((f) => ({
+            ...f,
+            email: user.email || f.email,
+            firstName: profile?.first_name || f.firstName,
+            lastName: profile?.last_name || f.lastName,
+            phone: profile?.phone || f.phone,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load user profile for checkout prefill:", err);
+      }
+    }
+    loadUserProfile();
+  }, []);
 
   const shipping = subtotal >= 999 ? 0 : 99;
   const total = subtotal - discount + shipping;

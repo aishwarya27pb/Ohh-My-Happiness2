@@ -6,6 +6,8 @@ import type {
   OrderWithItems,
   OrderStatus,
 } from "@/lib/supabase/types";
+import { sendWhatsAppMessage } from "./whatsapp.service";
+import { sendEmail, generateOrderStatusEmailHTML } from "./email.service";
 
 export interface CartItemParam {
   product: {
@@ -164,10 +166,87 @@ export async function updateOrderStatus(
   status: OrderStatus
 ): Promise<void> {
   const supabase = await createClient();
+
+  // Fetch the current order details with items first
+  const { data: orderData } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("id", orderId)
+    .single();
+
   const { error } = await supabase
     .from("orders")
     .update({ status })
     .eq("id", orderId);
 
   if (error) throw new Error(error.message);
+
+  // Send notifications if status changed
+  if (orderData && orderData.status !== status) {
+    const orderWithItems = orderData as unknown as OrderWithItems;
+
+    // 1. WhatsApp tracking update
+    if (orderWithItems.contact_phone) {
+      try {
+        let templateName = "";
+        let parameters: string[] = [];
+
+        switch (status) {
+          case "confirmed":
+            templateName = "order_confirmation_omh";
+            parameters = [
+              orderWithItems.contact_name,
+              orderWithItems.order_number,
+              `₹${orderWithItems.total}`,
+            ];
+            break;
+          case "shipped":
+            templateName = "order_shipped_omh";
+            parameters = [
+              orderWithItems.contact_name,
+              orderWithItems.order_number,
+            ];
+            break;
+          case "delivered":
+            templateName = "order_delivered_omh";
+            parameters = [
+              orderWithItems.contact_name,
+              orderWithItems.order_number,
+            ];
+            break;
+          case "cancelled":
+            templateName = "order_cancelled_omh";
+            parameters = [
+              orderWithItems.contact_name,
+              orderWithItems.order_number,
+            ];
+            break;
+        }
+
+        if (templateName) {
+          await sendWhatsAppMessage({
+            recipientPhone: orderWithItems.contact_phone,
+            templateName,
+            parameters,
+          });
+        }
+      } catch (wsErr) {
+        console.error(`WhatsApp notification failed for order status update to ${status}:`, wsErr);
+      }
+    }
+
+    // 2. Email tracking update
+    if (orderWithItems.contact_email) {
+      try {
+        const { subject, html } = generateOrderStatusEmailHTML(orderWithItems, status);
+        await sendEmail({
+          to: orderWithItems.contact_email,
+          subject,
+          html,
+        });
+      } catch (mailErr) {
+        console.error(`Email notification failed for order status update to ${status}:`, mailErr);
+      }
+    }
+  }
 }

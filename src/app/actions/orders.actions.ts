@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient, verifyAdmin } from "@/lib/supabase/server";
-import { createOrder, updateOrderStatus } from "@/lib/services/orders.service";
+import { createOrder, updateOrderStatus, getOrderById } from "@/lib/services/orders.service";
 import type { CartItemParam } from "@/lib/services/orders.service";
 import type { OrderStatus } from "@/lib/supabase/types";
 import { headers } from "next/headers";
@@ -11,6 +11,7 @@ import crypto from "crypto";
 import { env } from "@/env";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendWhatsAppMessage } from "@/lib/services/whatsapp.service";
+import { sendEmail, generateOrderStatusEmailHTML } from "@/lib/services/email.service";
 
 const actionLimiter = new RateLimiter({
   limit: 10,
@@ -108,20 +109,32 @@ export async function createOrderAction(
     couponCode: pricing.couponCode,
   });
 
-  if (form.paymentMethod === "cod" && form.phone) {
-    try {
-      await sendWhatsAppMessage({
-        recipientPhone: form.phone,
-        templateName: "order_confirmation_omh",
-        parameters: [
-          `${form.firstName} ${form.lastName}`,
-          result.orderNumber,
-          `₹${calculatedTotal}`,
-        ],
-      });
-    } catch (wsErr) {
-      console.error("WhatsApp trigger error for COD:", wsErr);
+  // Send notifications for COD order placement
+  try {
+    const fullOrder = await getOrderById(result.orderId);
+    if (fullOrder) {
+      if (fullOrder.contact_phone) {
+        await sendWhatsAppMessage({
+          recipientPhone: fullOrder.contact_phone,
+          templateName: "order_confirmation_omh",
+          parameters: [
+            fullOrder.contact_name,
+            fullOrder.order_number,
+            `₹${fullOrder.total}`,
+          ],
+        });
+      }
+      if (fullOrder.contact_email) {
+        const { subject, html } = generateOrderStatusEmailHTML(fullOrder, "confirmed");
+        await sendEmail({
+          to: fullOrder.contact_email,
+          subject,
+          html,
+        });
+      }
     }
+  } catch (wsErr) {
+    console.error("Notification trigger error for COD:", wsErr);
   }
 
   return result;
@@ -226,27 +239,33 @@ export async function verifyRazorpayPaymentAction(
       throw new Error(updateError.message);
     }
 
-    // Retrieve order details to trigger the WhatsApp message
+    // Retrieve order details to trigger notifications
     try {
-      const { data: orderData } = await serviceClient
-        .from("orders")
-        .select("order_number, contact_name, contact_phone, total")
-        .eq("id", params.orderId)
-        .single();
+      const fullOrder = await getOrderById(params.orderId);
+      if (fullOrder) {
+        if (fullOrder.contact_phone) {
+          await sendWhatsAppMessage({
+            recipientPhone: fullOrder.contact_phone,
+            templateName: "order_confirmation_omh",
+            parameters: [
+              fullOrder.contact_name,
+              fullOrder.order_number,
+              `₹${fullOrder.total}`,
+            ],
+          });
+        }
 
-      if (orderData && orderData.contact_phone) {
-        await sendWhatsAppMessage({
-          recipientPhone: orderData.contact_phone,
-          templateName: "order_confirmation_omh",
-          parameters: [
-            orderData.contact_name,
-            orderData.order_number,
-            `₹${orderData.total}`,
-          ],
-        });
+        if (fullOrder.contact_email) {
+          const { subject, html } = generateOrderStatusEmailHTML(fullOrder, "confirmed");
+          await sendEmail({
+            to: fullOrder.contact_email,
+            subject,
+            html,
+          });
+        }
       }
     } catch (wsErr) {
-      console.error("WhatsApp trigger error for Razorpay payment:", wsErr);
+      console.error("Notification trigger error for Razorpay payment:", wsErr);
     }
 
     return { success: true };
